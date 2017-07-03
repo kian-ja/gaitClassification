@@ -1,5 +1,6 @@
 classdef singleExperiment
 	properties
+        fileName = '';
     	dataLoaded = 0;
 		data = struct('time',[],'accelerationX',[],'accelerationY',[],...
             'accelerationZ',[],'activityLabel',[]);
@@ -20,6 +21,7 @@ classdef singleExperiment
             	singleExperimentObj = readData(singleExperimentObj,fileName);
             	if checkData(singleExperimentObj)
                 	singleExperimentObj.dataLoaded = 1;
+                    singleExperimentObj.fileName = fileName;
             	else
                 	warning('data format is not correct')
                     singleExperimentObj.data.time = [];

@@ -8,7 +8,7 @@ classdef populationExperiment
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function populationExperimentObj = populationExperiment(directory)
-			if nargin<1
+			if (nargin < 1)
             	disp('current directory will be considered')
                 populationExperimentObj = readAllFiles(populationExperimentObj);
           	else
@@ -19,7 +19,11 @@ classdef populationExperiment
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function populationExperimentObj = readAllFiles(populationExperimentObj,directory)
-			
+			if (nargin < 1)
+                listOfFiles = dir();
+            else
+                listOfFiles = dir(directory);
+            end
         end
 	end	
 end
