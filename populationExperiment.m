@@ -65,6 +65,11 @@ classdef populationExperiment
                 accelerationZ = [accelerationZ;dataThisExperiment.data.accelerationZ];
                 activityLabel = [activityLabel;dataThisExperiment.data.activityLabel];
             end
+            dataCat = [time accelerationX accelerationY ...
+                accelerationZ activityLabel];
+            populationExperimentObj.dataConcatenated = singleExperiment;
+            populationExperimentObj.dataConcatenated = setData(...
+                populationExperimentObj.dataConcatenated,dataCat);
             populationExperimentObj.dataLoaded = 1;
         end
 	end	
