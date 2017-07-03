@@ -69,8 +69,8 @@ classdef singleExperiment
             lengthY = length(singleExperimentObj.data.accelerationY);
             lengthZ = length(singleExperimentObj.data.accelerationZ);
             lengthLabel = length(singleExperimentObj.data.activityLabel);
-            if (lengthTime == lengthX == lengthY == lengthZ == lengthLabel)...
-                    && (lengthTime > 0)
+            if (lengthTime + lengthX + lengthY + lengthZ + lengthLabel)...
+                    /5 == lengthX && (lengthTime > 0)
                 dataHealth = 1;
             end
 		end
