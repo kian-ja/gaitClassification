@@ -16,7 +16,7 @@ classdef singleExperiment
 %%%%%%%%%%%%%%%%%%%%%%%
 		function singleExperimentObj = singleExperiment(fileName)
 			if (nargin < 1)
-            	error('File name must be specified')
+            	
           	else
             	singleExperimentObj = readData(singleExperimentObj,fileName);
             	if checkData(singleExperimentObj)
@@ -77,7 +77,21 @@ classdef singleExperiment
                     /5 == lengthX && (lengthTime > 0)
                 dataHealth = 1;
             end
-		end
+        end
+%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%new function%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+		function singleExperimentObj = setData(singleExperimentObj,data)
+            if (size(data,2) ==5)
+                singleExperimentObj.data.time = data(:,1);
+                singleExperimentObj.data.accelerationX = data(:,2);
+                singleExperimentObj.data.accelerationY = data(:,3);
+                singleExperimentObj.data.accelerationZ = data(:,4);
+                singleExperimentObj.data.activityLabel = data(:,5);
+            else
+                warning('wrong data format')
+            end
+		end        
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%		
