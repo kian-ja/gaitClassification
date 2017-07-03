@@ -5,11 +5,10 @@ classdef populationExperiment
         numberOfFilesFound = 0;
 		data = [];
         %Concatenated Data
-        time =[];
-        accelerationX =[];
-        accelerationY =[];
-        accelerationZ =[];
-        activityLabel =[];
+        dataConcatenated = [];
+        noActiveConcatenated = [];
+        walkConcatenated = [];
+        runConcatenated = [];
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -51,25 +50,20 @@ classdef populationExperiment
             numberOfFiles = length(fileNames);
             populationExperimentObj.numberOfFilesFound = numberOfFiles;
             populationExperimentObj.data = cell(numberOfFiles,1);
-            populationExperimentObj.time = [];
-            populationExperimentObj.accelerationX = [];
-            populationExperimentObj.accelerationY = [];
-            populationExperimentObj.accelerationZ = [];
-            populationExperimentObj.activityLabel = [];
+            time = [];
+            accelerationX = [];
+            accelerationY = [];
+            accelerationZ = [];
+            activityLabel = [];
             for i = 1 : numberOfFiles
                 dataThisExperiment = singleExperiment([directory,'/',fileNames{i}]);
                 populationExperimentObj.data{i} = dataThisExperiment;
                 %populating concatenated data
-                populationExperimentObj.time = [populationExperimentObj.time;...
-                    dataThisExperiment.data.time];
-                populationExperimentObj.accelerationX = [populationExperimentObj.accelerationX;...
-                    dataThisExperiment.data.accelerationX];
-                populationExperimentObj.accelerationY = [populationExperimentObj.accelerationY;...
-                    dataThisExperiment.data.accelerationY];
-                populationExperimentObj.accelerationZ = [populationExperimentObj.accelerationZ;...
-                    dataThisExperiment.data.accelerationZ];
-                populationExperimentObj.activityLabel = [populationExperimentObj.activityLabel;...
-                    dataThisExperiment.data.activityLabel]; 
+                time = [time;dataThisExperiment.data.time];
+                accelerationX = [accelerationX;dataThisExperiment.data.accelerationX];
+                accelerationY = [accelerationY;dataThisExperiment.data.accelerationY];
+                accelerationZ = [accelerationZ;dataThisExperiment.data.accelerationZ];
+                activityLabel = [activityLabel;dataThisExperiment.data.activityLabel];
             end
             populationExperimentObj.dataLoaded = 1;
         end
