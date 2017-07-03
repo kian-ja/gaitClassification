@@ -6,6 +6,7 @@ classdef populationExperiment
 		data = [];
         %Concatenated Data
         dataConcatenated = [];
+        notScoredConcatenated = [];
         noActiveConcatenated = [];
         walkConcatenated = [];
         runConcatenated = [];
@@ -71,6 +72,31 @@ classdef populationExperiment
             populationExperimentObj.dataConcatenated = setData(...
                 populationExperimentObj.dataConcatenated,dataCat);
             populationExperimentObj.dataLoaded = 1;
+            NOT_SCORED_CLASS = populationExperimentObj.dataConcatenated.NOT_SCORED_CLASS;
+            NO_ACTIVITY_CLASS = populationExperimentObj.dataConcatenated.NO_ACTIVITY_CLASS;
+            WALK_CLASS = populationExperimentObj.dataConcatenated.WALK_CLASS;
+            RUN_CLASS = populationExperimentObj.dataConcatenated.RUN_CLASS;
+            
+            indexNotScored = dataCat(:,5) == NOT_SCORED_CLASS;
+            indexNoActivity = dataCat(:,5) == NO_ACTIVITY_CLASS;
+            indexWalk = dataCat(:,5) == WALK_CLASS;
+            indexRun = dataCat(:,5) == RUN_CLASS;
+            dataCatNotScored = dataCat(indexNotScored,:);
+            dataCatNoActivity = dataCat(indexNoActivity,:);
+            dataCatWalk = dataCat(indexWalk,:);
+            dataCatRun = dataCat(indexRun,:);
+            populationExperimentObj.notScoredConcatenated = singleExperiment;
+            populationExperimentObj.notScoredConcatenated = setData(...
+                populationExperimentObj.notScoredConcatenated,dataCatNotScored);
+            populationExperimentObj.noActiveConcatenated = singleExperiment;
+            populationExperimentObj.noActiveConcatenated = setData(...
+                populationExperimentObj.noActiveConcatenated,dataCatNoActivity);
+            populationExperimentObj.walkConcatenated = singleExperiment;
+            populationExperimentObj.walkConcatenated = setData(...
+                populationExperimentObj.walkConcatenated,dataCatWalk);
+            populationExperimentObj.runConcatenated = singleExperiment;
+            populationExperimentObj.runConcatenated = setData(...
+                populationExperimentObj.runConcatenated,dataCatRun);
         end
 	end	
 end
