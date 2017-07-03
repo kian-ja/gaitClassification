@@ -39,6 +39,7 @@ classdef singleExperiment
 		function singleExperimentObj = readData(singleExperimentObj,fileName)
 			fileID = fopen(fileName);
             if (fileID == -1)
+                warning('File not found');
             else
                 dataFile = textscan(fileID,'%f,%f,%f,%f,%s');
                 time = dataFile{1};
