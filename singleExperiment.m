@@ -14,7 +14,7 @@ classdef singleExperiment
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function singleExperimentObj = singleExperiment(fileName)
-			if nargin<0
+			if (nargin < 1)
             	error('File name must be specified')
           	else
             	singleExperimentObj = readData(singleExperimentObj,fileName);
