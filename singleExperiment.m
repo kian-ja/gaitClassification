@@ -3,7 +3,7 @@ classdef singleExperiment
     	dataLoaded = 0;
 		data = struct('time',[],'accelerationX',[],'accelerationY',[],...
             'accelerationZ',[],'activityLabel',[]);
-		dataFormat = ['%f,%f,%f,%f,%s'];
+		dataFormat = '%f,%f,%f,%f,%s';
 		NOT_SCORED_CLASS = 0;
 		NO_ACTIVITY_CLASS = 1;
 		WALK_CLASS = 2;
@@ -17,12 +17,16 @@ classdef singleExperiment
 			if nargin<0
             	error('File name must be specified')
           	else
-            	data = readData(fileName);
-            	if checkData(data)
-                	singleExperimentObj.data = data;
+            	singleExperimentObj = readData(singleExperimentObj,fileName);
+            	if checkData(singleExperimentObj)
                 	singleExperimentObj.dataLoaded = 1;
             	else
                 	warning('data format is not correct')
+                    singleExperimentObj.data.time = [];
+                    singleExperimentObj.data.accelerationX = [];
+                    singleExperimentObj.data.accelerationY = [];
+                    singleExperimentObj.data.accelerationZ = [];
+                    singleExperimentObj.data.activityLabel = [];
                 	singleExperimentObj.dataLoaded = 0;
               	end
         	end
@@ -30,49 +34,58 @@ classdef singleExperiment
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
-		function data = readData(fileName)
+		function singleExperimentObj = readData(singleExperimentObj,fileName)
 			fileID = fopen(fileName);
-		    data = textscan(fileID,'%f,%f,%f,%f,%s');
-		    time = data{1};
-		    accelerationX = data{2};
-		    accelerationY = data{3};
-		    accelerationZ = data{4};
-		    activityLabel = data{5};
-		    indexWalk = find(contains(activityLabel,'Walk'));
-		    indexRun = find(contains(activityLabel,'Run'));
-		    activityLabel = ones(size(activityLabel)) * NO_CLASS;
-		    activityLabel(indexWalk) = WALK_CLASS;
-		    activityLabel(indexRun) = RUN_CLASS;
-		    if (length(activityLabel) == length(accelerationX) - 1)
-				activityLabel = [NO_CLASS;activityLabel];
-		    end
-		    data = struct('time',time,'accelerationX',accelerationX,'accelerationY',accelerationY,...
-            'accelerationZ',accelerationZ,'activityLabel',activityLabel);
+            if (fileID == -1)
+            else
+                dataFile = textscan(fileID,'%f,%f,%f,%f,%s');
+                time = dataFile{1};
+                accelerationX = dataFile{2};
+                accelerationY = dataFile{3};
+                accelerationZ = dataFile{4};
+                activityLabel = dataFile{5};
+                indexWalk = contains(activityLabel,'Walk');
+                indexRun = contains(activityLabel,'Run');
+                activityLabel = ones(size(activityLabel)) * singleExperimentObj.NO_ACTIVITY_CLASS;
+                activityLabel(indexWalk) = singleExperimentObj.WALK_CLASS;
+                activityLabel(indexRun) = singleExperimentObj.RUN_CLASS;
+                if (length(activityLabel) == length(accelerationX) - 1)
+                    activityLabel = [singleExperimentObj.NO_ACTIVITY_CLASS;activityLabel];
+                end
+                singleExperimentObj.data.time = time;
+                singleExperimentObj.data.accelerationX = accelerationX;
+                singleExperimentObj.data.accelerationY = accelerationY;
+                singleExperimentObj.data.accelerationZ = accelerationZ;
+                singleExperimentObj.data.activityLabel = activityLabel;
+            end
+        end
+%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%new function%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+		function dataHealth = checkData(singleExperimentObj)
+            dataHealth = 0;
+            lengthTime = length(singleExperimentObj.data.time);
+            lengthX = length(singleExperimentObj.data.accelerationX);
+            lengthY = length(singleExperimentObj.data.accelerationY);
+            lengthZ = length(singleExperimentObj.data.accelerationZ);
+            lengthLabel = length(singleExperimentObj.data.activityLabel);
+            if (lengthTime == lengthX == lengthY == lengthZ == lengthLabel)...
+                    && (lengthTime > 0)
+                dataHealth = 1;
+            end
 		end
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%		
-		function setDataFormat (dataFormat)
-			singleExperimentObj.dataFormat = dataFormat;
-		end
-%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%new function%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%
-		function dataHealth = checkData(data)
-			dataHealth = 1;
-		end
-%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%new function%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%		
-		function plot
+		function plot(singleExperimentObj)
 			subplot(4,1,1)
-			plot(data.time,data.accelerationX)
+			plot(singleExperimentObj.data.time,singleExperimentObj.data.accelerationX)
 			subplot(4,1,2)
-			plot(data.time,data.accelerationY)
+			plot(singleExperimentObj.data.time,singleExperimentObj.data.accelerationY)
 			subplot(4,1,3)
-			plot(data.time,data.accelerationZ)
+			plot(singleExperimentObj.data.time,singleExperimentObj.data.accelerationZ)
 			subplot(4,1,4)
-			plot(data.time,data.activityLabel)
+			plot(singleExperimentObj.data.time,singleExperimentObj.data.activityLabel)
 		end
 	end	
 end
