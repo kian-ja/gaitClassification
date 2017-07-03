@@ -65,6 +65,7 @@ classdef singleExperiment
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function dataHealth = checkData(singleExperimentObj)
+            %Other tests need to be added to verify the data format
             dataHealth = 0;
             lengthTime = length(singleExperimentObj.data.time);
             lengthX = length(singleExperimentObj.data.accelerationX);
