@@ -1,6 +1,8 @@
 classdef populationExperiment
 	properties
-    	allDataLoaded = 0;
+        directory = '';
+    	dataLoaded = 0;
+        numberOfFilesFound = 0;
 		data;
 	end
 	methods
@@ -11,7 +13,8 @@ classdef populationExperiment
 			if (nargin < 1)
             	disp('current directory will be considered')
                 populationExperimentObj = readAllFiles(populationExperimentObj);
-          	else
+            else
+                populationExperimentObj.directory = directory;
             	populationExperimentObj = readAllFiles(populationExperimentObj,directory);
         	end
     	end
@@ -19,8 +22,9 @@ classdef populationExperiment
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function populationExperimentObj = readAllFiles(populationExperimentObj,directory)
-			if (nargin < 1)
+			if (nargin < 2)
                 listOfFiles = dir();
+                directory = '';
             else
                 listOfFiles = dir(directory);
             end
@@ -38,6 +42,14 @@ classdef populationExperiment
                 end
             end
             fileNames(cellfun(@isempty,fileNames)) = [];
+            numberOfFiles = length(fileNames);
+            populationExperimentObj.numberOfFilesFound = numberOfFiles;
+            populationExperimentObj.data = cell(numberOfFiles,1);
+            for i = 1 : numberOfFiles
+                dataThisExperiment = singleExperiment([directory,'/',fileNames{i}]);
+                populationExperimentObj.data{i} = dataThisExperiment;
+            end
+            populationExperimentObj.dataLoaded = 1;
         end
 	end	
 end
