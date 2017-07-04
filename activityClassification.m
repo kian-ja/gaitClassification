@@ -4,8 +4,8 @@ classdef activityClassification
         classificationRate = 1; %1Hz
         samplingRate = 0.02;
         plotMode = true;
-        trainingNumSegemnt = 500;
-        validationNumSegemnt = 500;
+        trainingNumSegment = 500;
+        validationNumSegment = 500;
         trainingRatio = 0.8;
 	end
 	methods
@@ -37,7 +37,7 @@ classdef activityClassification
                 splitDataActivity(dataValidation);
             trainingSetFeature = [];
             trainingSetLabel = [];
-            for i = 1 : classTrainObj.trainingNumSegemnt
+            for i = 1 : classTrainObj.trainingNumSegment
                 for j = 1 : length(dataTrainSplitActivity)
                     dataTrainSegmentThisActivity = randomSelect(classTrainObj...
                     ,dataTrainSplitActivity{j});
@@ -47,23 +47,25 @@ classdef activityClassification
                     trainingSetLabel = [trainingSetLabel;labelTemp];
                 end
             end
-            t = templateSVM('SaveSupportVectors','on');
-            classTrainObj.classifierModel = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',t);
-            
+            model = templateSVM('SaveSupportVectors','on');
+            model = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',model);
+            classTrainObj.classifierModel = model;
             %Validation
             validationSetFeature = [];
             validationSetLabel = [];
             for i = 1 : classTrainObj.validationNumSegment
-                for j = 1 : length(dataVaidSplitActivity)
+                for j = 1 : length(dataValidSplitActivity)
                     dataValidSegmentThisActivity = randomSelect(classTrainObj...
                     ,dataValidSplitActivity{j});
-                    featureTemp = classificationFeature(dataValidSegmentThisActivity);
-                    validationSetFeature = [validationSetFeature;featureTemp.feature];
-                    labelTemp = dataValidSplitActivity{j}.data.activityLabel(1);
-                    validationSetLabel = [validationSetLabel;labelTemp];
+                    if ~isempty(dataValidSegmentThisActivity)
+                        featureTemp = classificationFeature(dataValidSegmentThisActivity);
+                        validationSetFeature = [validationSetFeature;featureTemp.feature];
+                        labelTemp = dataValidSplitActivity{j}.data.activityLabel(1);
+                        validationSetLabel = [validationSetLabel;labelTemp];
+                    end
                 end
             end
-            predictValidationSetLabel = predict(Mdl,validationSetFeature);
+            predictValidationSetLabel = predict(model,validationSetFeature);
         end
     end
 end
@@ -146,17 +148,23 @@ function dataSegment = randomSelect(classTrainObj,data)
         segLength = classTrainObj.classificationRate;
         samplingRate = classTrainObj.samplingRate;
         segLength = floor(segLength/samplingRate);
-        segmentInitPoint = randi([1 length(data.data.time)-segLength-1]);
-        dataSegment = singleExperiment;
-        dataSegment.samplingTime = data.samplingTime;
-        dataSegmentData = [...
-            data.data.time(segmentInitPoint:segmentInitPoint+segLength-1),...
-            data.data.accelerationX(segmentInitPoint:segmentInitPoint+segLength-1),...
-            data.data.accelerationY(segmentInitPoint:segmentInitPoint+segLength-1),...
-            data.data.accelerationZ(segmentInitPoint:segmentInitPoint+segLength-1),...
-            data.data.activityLabel(segmentInitPoint:segmentInitPoint+segLength-1)];
-        dataSegment = setData(dataSegment,dataSegmentData);
+        if ((length(data.data.time)-segLength-1)>1)
+            segmentInitPoint = randi([1 length(data.data.time)-segLength-1]);
+            dataSegment = singleExperiment;
+            dataSegment.samplingTime = data.samplingTime;
+            dataSegmentData = [...
+                data.data.time(segmentInitPoint:segmentInitPoint+segLength-1),...
+                data.data.accelerationX(segmentInitPoint:segmentInitPoint+segLength-1),...
+                data.data.accelerationY(segmentInitPoint:segmentInitPoint+segLength-1),...
+                data.data.accelerationZ(segmentInitPoint:segmentInitPoint+segLength-1),...
+                data.data.activityLabel(segmentInitPoint:segmentInitPoint+segLength-1)];
+            dataSegment = setData(dataSegment,dataSegmentData);
+        else
+            dataSegment = [];
+            warning('Not enough data point for this class')
+        end
     else
+        dataSegment = [];
         warning('randomSelect: input data not supported...')
     end
     
