@@ -3,6 +3,9 @@ classdef activityClassification
         classifierModel = [];
         classificationRate = 1; %1Hz
         samplingRate = 0.02;
+        plotMode = true;
+        trainingNumSegemnt = 500;
+        validationNumSegemnt = 500;
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -18,12 +21,64 @@ classdef activityClassification
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
         function classTrainObj = train(classTrainObj,data)
-            [dataNotActive,dataWalk,dataRun] = splitData(data);
-        end	
+            %Need to write this more general to accept more than 3 
+            %activation types
+            
+            [dataTraining,dataValidation] = splitDataTrainValid(data);
+            
+            %Training
+            [dataTrainNotActive,dataTrainWalk,dataTrainRun] = ...
+                splitDataActivity(dataValidation);
+            [dataValidNotActive,dataValidWalk,dataVaidRun] = ...
+                splitDataActivity(dataTraining);
+            featureTrainingNotActive = [];
+            for i = 1 : trainingNumSegment
+                dataTrainNotActiveSegment = randomSelect(classTrainObj...
+                    ,dataTrainNotActive);
+                dataTrainWalkSegment = randomSelect(classTrainObj...
+                    ,dataTrainWalk);
+                dataTrainRunSegment = randomSelect(classTrainObj...
+                    ,dataTrainRun);
+                featureTemp = classificationFeature(dataTrainNotActiveSegment);
+                featureTrainingNotActive = [featureTrainingNotActive;featureTemp];
+                featureTemp = classificationFeature(dataTrainWalkSegment);
+                featureTrainingWalk = [featureTrainingWalk;featureTemp];
+                featureTemp = classificationFeature(dataTrainRunSegment);
+                featureTrainingRun = [featureTrainingRun;featureTemp];
+            end
+            trainingSetFeature = [featureTrainingNotActive;featureTrainingWalk;featureTrainingRun];
+            trainingSetLabel = [ones(size(featureTrainingNotActive,1),1)*1;...
+            ones(size(featureTrainingWalk,1),1)* 2;...
+            ones(size(featureTrainingRun,1),1) * 3];
+            t = templateSVM('SaveSupportVectors','on');
+            classTrainObj.classifierModel = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',t);
+            
+            %Validation
+            featureValidationNotActive = [];
+            for i = 1 : validationNumSegment
+                dataValidNotActiveSegment = randomSelect(classTrainObj...
+                    ,dataValidNotActive);
+                dataValidWalkSegment = randomSelect(classTrainObj...
+                    ,dataValidWalk);
+                dataValidRunSegment = randomSelect(classTrainObj...
+                    ,dataValidRun);
+                featureTemp = classificationFeature(dataValidNotActiveSegment);
+                featureValidationNotActive = [featureValidationNotActive;featureTemp];
+                featureTemp = classificationFeature(dataValidWalkSegment);
+                featureValidationWalk = [featureValidationWalk;featureTemp];
+                featureTemp = classificationFeature(dataValidRunSegment);
+                featureValidationRun = [featureValidationRun;featureTemp];
+            end
+            validationSetFeature = [featureValidationNotActive;featureValidationWalk;featureValidationRun];
+            validationSetLabel = [ones(size(featureValidationNotActive,1),1)*1;...
+            ones(size(featureValidationWalk,1),1)* 2;...
+            ones(size(featureValidationRun,1),1) * 3];
+            predictValidationSetLabel = predict(Mdl,validationSetFeature);
+        end
     end
 end
 
-function [dataNotActive,dataWalk,dataRun] = splitData(data)
+function [dataNotActive,dataWalk,dataRun] = splitDataActivity(data)
     [data,dataOK] = prepareData(data);
     if dataOK
         dataNotActive = data.noActive;
