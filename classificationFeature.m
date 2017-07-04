@@ -92,9 +92,11 @@ classdef classificationFeature
 end
 
 function signalPower = computePower(signal)
+    signal = signal - mean(signal);
     signalPower = sum(signal.^2);
 end
 function signalHighFreqPower = computeHighFreqPower(signal,samplingTime,cutOffFreq)
+    signal = signal - mean(signal);
     if nargin==1
         samplingTime = 0.02;
         cutOffFreq = 3;
