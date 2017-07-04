@@ -9,15 +9,19 @@ classdef singleExperiment
 		NO_ACTIVITY_CLASS = 1;
 		WALK_CLASS = 2;
 		RUN_CLASS = 3;
+        samplingTime = 0.02;
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
-		function singleExperimentObj = singleExperiment(fileName)
-			if (nargin < 1)
-            	
-          	else
+		function singleExperimentObj = singleExperiment(fileName,samplingTime)
+			if (nargin == 1)
+                samplingTime = 0.02;
+            end
+            if (nargin < 1)
+            else
+                singleExperimentObj.samplingTime = samplingTime;
             	singleExperimentObj = readData(singleExperimentObj,fileName);
             	if checkData(singleExperimentObj)
                 	singleExperimentObj.dataLoaded = 1;
