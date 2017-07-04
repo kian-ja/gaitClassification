@@ -31,10 +31,10 @@ classdef classificationFeature
                 if (size(data,2) > size(data,1))
                     data = data';
                 end
-                if (size(data,2) == 3)
-                    accelerationX = data(:,1);
-                    accelerationY = data(:,2);
-                    accelerationZ = data(:,3);
+                if (size(data,2) == 5)
+                    accelerationX = data(:,2);
+                    accelerationY = data(:,3);
+                    accelerationZ = data(:,4);
                 else
                     warning('Input not supported')
                 end
