@@ -28,52 +28,38 @@ classdef activityClassification
                 (data,classTrainObj.trainingValidationRatio);
             
             %Training
-            [dataTrainNotActive,dataTrainWalk,dataTrainRun] = ...
+            dataTrainSplitActivity = ...
                 splitDataActivity(dataTraining);
-            [dataValidNotActive,dataValidWalk,dataValidRun] = ...
+            dataValidSplitActivity = ...
                 splitDataActivity(dataValidation);
-            featureTrainingNotActive = [];
+            trainingSetFeature = [];
+            trainingSetLabel = [];
             for i = 1 : trainingNumSegment
-                dataTrainNotActiveSegment = randomSelect(classTrainObj...
-                    ,dataTrainNotActive);
-                dataTrainWalkSegment = randomSelect(classTrainObj...
-                    ,dataTrainWalk);
-                dataTrainRunSegment = randomSelect(classTrainObj...
-                    ,dataTrainRun);
-                featureTemp = classificationFeature(dataTrainNotActiveSegment);
-                featureTrainingNotActive = [featureTrainingNotActive;featureTemp];
-                featureTemp = classificationFeature(dataTrainWalkSegment);
-                featureTrainingWalk = [featureTrainingWalk;featureTemp];
-                featureTemp = classificationFeature(dataTrainRunSegment);
-                featureTrainingRun = [featureTrainingRun;featureTemp];
+                for j = 1 : length(dataTrainSplitActivity)
+                    dataTrainSegmentThisActivity = randomSelect(classTrainObj...
+                    ,dataTrainSplitActivity{j});
+                    featureTemp = classificationFeature(dataTrainSegmentThisActivity);
+                    trainingSetFeature = [trainingSetFeature;featureTemp];
+                    labelTemp = dataTrainSplitActivity{j}.data.activityLabel(1);
+                    trainingSetLabel = [trainingSetLabel;labelTemp];
+                end
             end
-            trainingSetFeature = [featureTrainingNotActive;featureTrainingWalk;featureTrainingRun];
-            trainingSetLabel = [ones(size(featureTrainingNotActive,1),1)*1;...
-            ones(size(featureTrainingWalk,1),1)* 2;...
-            ones(size(featureTrainingRun,1),1) * 3];
             t = templateSVM('SaveSupportVectors','on');
             classTrainObj.classifierModel = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',t);
             
             %Validation
-            featureValidationNotActive = [];
+            validationSetFeature = [];
+            validationSetLabel = [];
             for i = 1 : validationNumSegment
-                dataValidNotActiveSegment = randomSelect(classTrainObj...
-                    ,dataValidNotActive);
-                dataValidWalkSegment = randomSelect(classTrainObj...
-                    ,dataValidWalk);
-                dataValidRunSegment = randomSelect(classTrainObj...
-                    ,dataValidRun);
-                featureTemp = classificationFeature(dataValidNotActiveSegment);
-                featureValidationNotActive = [featureValidationNotActive;featureTemp];
-                featureTemp = classificationFeature(dataValidWalkSegment);
-                featureValidationWalk = [featureValidationWalk;featureTemp];
-                featureTemp = classificationFeature(dataValidRunSegment);
-                featureValidationRun = [featureValidationRun;featureTemp];
+                for j = 1 : length(dataVaidSplitActivity)
+                    dataValidSegmentThisActivity = randomSelect(classTrainObj...
+                    ,dataValidSplitActivity{j});
+                    featureTemp = classificationFeature(dataValidSegmentThisActivity);
+                    validationSetFeature = [validationSetFeature;featureTemp];
+                    labelTemp = dataValidSplitActivity{j}.data.activityLabel(1);
+                    validationSetLabel = [validationSetLabel;labelTemp];
+                end
             end
-            validationSetFeature = [featureValidationNotActive;featureValidationWalk;featureValidationRun];
-            validationSetLabel = [ones(size(featureValidationNotActive,1),1)*1;...
-            ones(size(featureValidationWalk,1),1)* 2;...
-            ones(size(featureValidationRun,1),1) * 3];
             predictValidationSetLabel = predict(Mdl,validationSetFeature);
         end
     end
