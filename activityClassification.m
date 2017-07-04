@@ -6,6 +6,7 @@ classdef activityClassification
         plotMode = true;
         trainingNumSegemnt = 500;
         validationNumSegemnt = 500;
+        trainingRatio = 0.8;
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -24,13 +25,14 @@ classdef activityClassification
             %Need to write this more general to accept more than 3 
             %activation types
             
-            [dataTraining,dataValidation] = splitDataTrainValid(data);
+            [dataTraining,dataValidation] = splitDataTrainValid...
+                (data,classTrainObj.trainingValidationRatio);
             
             %Training
             [dataTrainNotActive,dataTrainWalk,dataTrainRun] = ...
-                splitDataActivity(dataValidation);
-            [dataValidNotActive,dataValidWalk,dataVaidRun] = ...
                 splitDataActivity(dataTraining);
+            [dataValidNotActive,dataValidWalk,dataValidRun] = ...
+                splitDataActivity(dataValidation);
             featureTrainingNotActive = [];
             for i = 1 : trainingNumSegment
                 dataTrainNotActiveSegment = randomSelect(classTrainObj...
@@ -78,6 +80,39 @@ classdef activityClassification
     end
 end
 
+function [dataTrain,dataValid] = splitDataTrainValid(data,trainingRatio)
+    if (class(data) == 'singleExperiment')
+        if trainingRatio >1
+            warning('ratio must be less than 1')
+        else
+            dataTrain = singleExperiment;
+            dataTrain.samplingTime = data.samplingTime;
+            dataValid = singleExperiment;
+            dataValid.samplingTime = data.samplingTime;
+            dataLength = length(data.data.time);
+            trainingLength = floor(dataLength * trainingRatio);
+            dataTrainArray = [data.data.time(1:trainingLength),...
+                data.data.accelerationX(1:trainingLength),...
+                data.data.accelerationY(1:trainingLength),...
+                data.data.accelerationZ(1:trainingLength),...
+                data.data.activityLabel(1:trainingLength)];
+            
+            dataValidArray = [data.data.time(trainingLength+1:end),...
+                data.data.accelerationX(trainingLength+1:end),...
+                data.data.accelerationY(trainingLength+1:end),...
+                data.data.accelerationZ(trainingLength+1:end),...
+                data.data.activityLabel(trainingLength+1:end)];
+            dataTrain = setData(dataTrain,dataTrainArray);
+            dataValid = setData(dataValid,dataValidArray);
+        end
+        
+    else
+        dataTrain = [];
+        dataValid = [];
+        warning('input data not supported...')
+    end
+end
+            
 function [dataNotActive,dataWalk,dataRun] = splitDataActivity(data)
     [data,dataOK] = prepareData(data);
     if dataOK
