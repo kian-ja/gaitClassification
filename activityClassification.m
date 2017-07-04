@@ -42,7 +42,7 @@ classdef activityClassification
                     dataTrainSegmentThisActivity = randomSelect(classTrainObj...
                     ,dataTrainSplitActivity{j});
                     featureTemp = classificationFeature(dataTrainSegmentThisActivity);
-                    trainingSetFeature = [trainingSetFeature;featureTemp];
+                    trainingSetFeature = [trainingSetFeature;featureTemp.feature];
                     labelTemp = dataTrainSplitActivity{j}.data.activityLabel(1);
                     trainingSetLabel = [trainingSetLabel;labelTemp];
                 end
@@ -58,7 +58,7 @@ classdef activityClassification
                     dataValidSegmentThisActivity = randomSelect(classTrainObj...
                     ,dataValidSplitActivity{j});
                     featureTemp = classificationFeature(dataValidSegmentThisActivity);
-                    validationSetFeature = [validationSetFeature;featureTemp];
+                    validationSetFeature = [validationSetFeature;featureTemp.feature];
                     labelTemp = dataValidSplitActivity{j}.data.activityLabel(1);
                     validationSetLabel = [validationSetLabel;labelTemp];
                 end
@@ -146,7 +146,7 @@ function dataSegment = randomSelect(classTrainObj,data)
         segLength = classTrainObj.classificationRate;
         samplingRate = classTrainObj.samplingRate;
         segLength = floor(segLength/samplingRate);
-        segmentInitPoint = randi([1 length(s.data.time)-segLength-1]);
+        segmentInitPoint = randi([1 length(data.data.time)-segLength-1]);
         dataSegment = singleExperiment;
         dataSegment.samplingTime = data.samplingTime;
         dataSegmentData = [...
