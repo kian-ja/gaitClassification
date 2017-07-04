@@ -50,13 +50,14 @@ classdef classificationFeature
             classFeatureObj.feature = [];
             
             if (classFeatureObj.flagFeature_SMV_Power)
-                feature_SMV_Power = computePower([accelerationX,...
-                    accelerationY,accelerationZ]);
+                feature_SMV_Power = computePower(accelerationX.^2+...
+                    accelerationY.^2+accelerationZ.^2);
                 classFeatureObj.feature = [classFeatureObj.feature feature_SMV_Power];
             end
             if (classFeatureObj.flagFeature_SMV_HighFreqPower)
-                feature_SMV_HF_Power = computeHighFreqPower([accelerationX,...
-                    accelerationY,accelerationZ],classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
+                feature_SMV_HF_Power = computeHighFreqPower(accelerationX.^2+...
+                    accelerationY.^2+accelerationZ.^2,...
+                    classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
                 classFeatureObj.feature = [classFeatureObj.feature feature_SMV_HF_Power];
             end
             if (classFeatureObj.flagFeatureAccelXPower)
@@ -106,12 +107,12 @@ function signalHighFreqPower = computeHighFreqPower(signal,samplingTime,cutOffFr
 end
 
 function [X,frequency] = fourier(x,samplingTime)
-    if mod(length(x),2) == 0
+    if iseven(length(x)) == 0
         frequency = -1/2/samplingTime : 1/samplingTime/length(x) : 1/2/samplingTime;
     else
         frequency = -1/2/samplingTime : 1/samplingTime/length(x) : 1/2/samplingTime-1/samplingTime/length(x);
     end
-    X = fft(x)/length(x);
+    X = fft(x) / length(x);
     X = FFTmirror(X);
     X = abs(X);
     freqIndex = frequency >= 0;
@@ -119,4 +120,31 @@ function [X,frequency] = fourier(x,samplingTime)
     X = X(freqIndex);
     frequency = frequency(:);
     X = X(:);
+end
+
+function y = FFTmirror(x)
+    if min(size(x)) > 1
+      error('Input must be a vector.')
+    end
+    is_column = size(x, 1) > 1;
+    x = x(:);
+    len = length(x);
+    if iseven(len)
+        yy = [x((len+2)/2:len); x(1:(len+2)/2)];
+        yy(1) = conj(yy(1));
+    else
+        yy = fftshift(x);
+    end
+    if is_column
+      y = yy;
+    else
+      y = yy.';
+    end
+end
+function y = iseven(x)
+    % ISEVEN tests for the input value being even
+    %
+    %     Y = ISEVEN(X) returns 1 if X ix even and returns 0 otherwise. At present this
+    %     function accepts scalar X.
+    y = fix(x/2) * 2 == x;
 end
