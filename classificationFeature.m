@@ -27,7 +27,7 @@ classdef classificationFeature
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%        
         function classFeatureObj = createFeature(classFeatureObj,data)
-            if numeric(data)
+            if isnumeric(data)
                 if (size(data,2) > size(data,1))
                     data = data';
                 end
