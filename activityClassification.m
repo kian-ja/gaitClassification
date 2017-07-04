@@ -24,7 +24,6 @@ classdef activityClassification
         function classTrainObj = train(classTrainObj,data)
             %Need to write this more general to accept more than 3 
             %activation types
-            
             [dataTraining,dataValidation] = splitDataTrainValid...
                 (data,classTrainObj.trainingValidationRatio);
             
@@ -109,39 +108,49 @@ function [dataTrain,dataValid] = splitDataTrainValid(data,trainingRatio)
     else
         dataTrain = [];
         dataValid = [];
-        warning('input data not supported...')
+        warning('splitDataTrainValid: input data not supported...')
     end
 end
             
-function [dataNotActive,dataWalk,dataRun] = splitDataActivity(data)
-    [data,dataOK] = prepareData(data);
-    if dataOK
-        dataNotActive = data.noActive;
-        dataWalk = data.walk;
-        dataRun = data.run;
+function dataActivitySplit = splitDataActivity(data)
+    if (class(data) == 'singleExperiment')
+        indexNotScored = data.Data.activityLabel == data.NOT_SCORED_CLASS;
+        indexNoActivity = data.Data.activityLabel == data.NO_ACTIVITY_CLASS;
+        indexWalk = data.Data.activityLabel == data.WALK_CLASS;
+        indexRun = data.Data.activityLabel == data.RUN_CLASS;
+        dataNotScored = [data.Data.time(indexNotScored,:),...
+            data.Data.accelearationX(indexNotScored,:),...
+            data.Data.accelearationY(indexNotScored,:),...
+            data.Data.accelearationZ(indexNotScored,:),...
+            data.Data.activityLabel(indexNotScored,:)];
+        dataNoActivity = [data.Data.time(indexNoActivity,:),...
+            data.Data.accelearationX(indexNoActivity,:),...
+            data.Data.accelearationY(indexNoActivity,:),...
+            data.Data.accelearationZ(indexNoActivity,:),...
+            data.Data.activityLabel(indexNoActivity,:)];
+        dataWalk = [data.Data.time(indexWalk,:),...
+            data.Data.accelearationX(indexWalk,:),...
+            data.Data.accelearationY(indexWalk,:),...
+            data.Data.accelearationZ(indexWalk,:),...
+            data.Data.activityLabel(indexWalk,:)];
+        dataRun = [data.Data.time(indexRun,:),...
+            data.Data.accelearationX(indexRun,:),...
+            data.Data.accelearationY(indexRun,:),...
+            data.Data.accelearationZ(indexRun,:),...
+            data.Data.activityLabel(indexRun,:)];
+        dataActivitySplit = cell(3,1);
+        dataActivitySplit{1} = singleExperiment;
+        dataActivitySplit{1}.samplingTime = data.samplingTime;
+        dataActivitySplit{1} = setData(dataActivitySplit{1},dataNoActivity);
+        dataActivitySplit{2} = singleExperiment;
+        dataActivitySplit{2}.samplingTime = data.samplingTime;
+        dataActivitySplit{2} = setData(dataActivitySplit{1},dataWalk);
+        dataActivitySplit{3} = singleExperiment;
+        dataActivitySplit{3}.samplingTime = data.samplingTime;
+        dataActivitySplit{3} = setData(dataActivitySplit{1},dataRun);
+    else
+        warning('splitDataActivity: input data not supported')
     end
-%     if (class(data) == populationExperiment)
-% 
-%     elseif (class(data) == singleExperiment)
-%         classTrainObj.samplingRate = data.samplingTime;
-%         %TBD need to split into not active, walk, run
-%     elseif (isnumeric(data))
-%         if (size(data,2) > size(data,1))
-%             data = data';
-%         end
-%         if (size(data,2) == 3)
-%             dataTemp = data;
-%             data = singleExperiment;
-%             data = setData(data,dataTemp);
-%             %TBD need to split into not active, walk, run
-%         else
-%             warning('data not supported')
-%         end
-%     else
-%         warning('input data not supported');
-%     end
-%     classificationSamples = classTrainObj.feedbackRate/samplingTime;
-
 end
         
         
