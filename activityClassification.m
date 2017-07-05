@@ -1,12 +1,16 @@
 classdef activityClassification
 	properties
         classifierModel = [];
-        classificationRate = 1; %1Hz
+        classificationRate = 4; %1Hz
         samplingRate = 0.02;
         plotMode = true;
         trainingNumSegment = 500;
         validationNumSegment = 500;
-        trainingRatio = 0.8;
+        trainingRatio = 0.5;
+        truePositiveIdentification = [];
+        falsePositiveIdentification = [];
+        truePositiveValidation = [];
+        falsePositiveValidation = [];
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -50,6 +54,12 @@ classdef activityClassification
             model = templateSVM('SaveSupportVectors','on');
             model = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',model);
             classTrainObj.classifierModel = model;
+            predictTrainingSetLabel = predict(model,trainingSetFeature);
+            
+            tPosID = computeTruePositive(trainingSetLabel,predictTrainingSetLabel);
+            fPosID = computeFalsePositive(trainingSetLabel,predictTrainingSetLabel);
+            classTrainObj.truePositiveIdentification = tPosID;
+            classTrainObj.falsePositiveIdentification = fPosID;
             %Validation
             validationSetFeature = [];
             validationSetLabel = [];
@@ -66,10 +76,40 @@ classdef activityClassification
                 end
             end
             predictValidationSetLabel = predict(model,validationSetFeature);
+            tPosValid = computeTruePositive(validationSetLabel,predictValidationSetLabel);
+            fPosValid = computeFalsePositive(validationSetLabel,predictValidationSetLabel);
+            
+            classTrainObj.truePositiveValidation = tPosValid;
+            classTrainObj.falsePositiveValidation = fPosValid;
         end
     end
 end
-
+function truePositive = computeTruePositive(signalTrue,signalMeasured)
+    classes = unique(signalTrue);
+    numClasses = length(classes);
+    truePositive = 0;
+    for i = 1 : numClasses
+        indexThisClass = find(signalTrue == classes(i));
+        numThisClassOccured = length(indexThisClass);
+        probabilityThisClass = numThisClassOccured/length(signalTrue);
+        numThisClassPredicted = sum(signalMeasured (indexThisClass) == classes(i));
+        truePositive = truePositive + ...
+            numThisClassPredicted/numThisClassOccured * probabilityThisClass;
+    end
+end
+function falsePositive = computeFalsePositive(signalTrue,signalMeasured)
+    classes = unique(signalTrue);
+    numClasses = length(classes);
+    falsePositive = 0;
+    for i = 1 : numClasses
+        indexNotThisClass = find(signalTrue ~= classes(i));
+        numNotThisClassOccured = length(indexNotThisClass);
+        probabilityNotThisClass = numNotThisClassOccured/length(signalTrue);
+        numThisClassPredicted = sum(signalMeasured (indexNotThisClass) == classes(i));
+        falsePositive = falsePositive + ...
+            numThisClassPredicted/numNotThisClassOccured * probabilityNotThisClass;
+    end
+end
 function [dataTrain,dataValid] = splitDataTrainValid(data,trainingRatio)
     if (class(data) == 'singleExperiment')
         if trainingRatio >1
@@ -135,10 +175,10 @@ function dataActivitySplit = splitDataActivity(data)
         dataActivitySplit{1} = setData(dataActivitySplit{1},dataNoActivity);
         dataActivitySplit{2} = singleExperiment;
         dataActivitySplit{2}.samplingTime = data.samplingTime;
-        dataActivitySplit{2} = setData(dataActivitySplit{1},dataWalk);
+        dataActivitySplit{2} = setData(dataActivitySplit{2},dataWalk);
         dataActivitySplit{3} = singleExperiment;
         dataActivitySplit{3}.samplingTime = data.samplingTime;
-        dataActivitySplit{3} = setData(dataActivitySplit{1},dataRun);
+        dataActivitySplit{3} = setData(dataActivitySplit{3},dataRun);
     else
         warning('splitDataActivity: input data not supported')
     end

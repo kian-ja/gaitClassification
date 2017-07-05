@@ -51,14 +51,9 @@ classdef populationExperiment
             numberOfFiles = length(fileNames);
             populationExperimentObj.numberOfFilesFound = numberOfFiles;
             populationExperimentObj.data = cell(numberOfFiles,1);
-            time = [];
-            accelerationX = [];
-            accelerationY = [];
-            accelerationZ = [];
-            activityLabel = [];
             for i = 1 : numberOfFiles
-                dataThisExperiment = singleExperiment([directory,'/',fileNames{i}]);
-                populationExperimentObj.data{i} = dataThisExperiment;
+                thisExperiment = singleExperiment([directory,'/',fileNames{i}]);
+                populationExperimentObj.data{i} = thisExperiment;
                 %populating concatenated data
                 time = [time;dataThisExperiment.data.time];
                 accelerationX = [accelerationX;dataThisExperiment.data.accelerationX];

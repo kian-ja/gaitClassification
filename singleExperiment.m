@@ -1,41 +1,36 @@
 classdef singleExperiment
 	properties
         fileName = '';
-    	dataLoaded = 0;
-		data = struct('time',[],'accelerationX',[],'accelerationY',[],...
-            'accelerationZ',[],'activityLabel',[]);
-		dataFormat = '%f,%f,%f,%f,%s';
-		NOT_SCORED_CLASS = 0;
-		NO_ACTIVITY_CLASS = 1;
-		WALK_CLASS = 2;
-		RUN_CLASS = 3;
+        dataFormat = '%f,%f,%f,%f,%s';
         samplingTime = 0.02;
+        numClass = 0;
+    	dataLoaded = 0;
+		dataMatrix = [];
+        activityLabel = [];
+        dataActivitySorted = [];
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function singleExperimentObj = singleExperiment(fileName,samplingTime)
-			if (nargin == 1)
+            if (nargin == 1)
                 samplingTime = 0.02;
             end
             if (nargin < 1)
             else
                 singleExperimentObj.samplingTime = samplingTime;
             	singleExperimentObj = readData(singleExperimentObj,fileName);
-            	if checkData(singleExperimentObj)
+                if checkData(singleExperimentObj)
+                    singleExperimentObj = activitySort(singleExperimentObj);
                 	singleExperimentObj.dataLoaded = 1;
                     singleExperimentObj.fileName = fileName;
-            	else
+                else
                 	warning('data format is not correct')
-                    singleExperimentObj.data.time = [];
-                    singleExperimentObj.data.accelerationX = [];
-                    singleExperimentObj.data.accelerationY = [];
-                    singleExperimentObj.data.accelerationZ = [];
-                    singleExperimentObj.data.activityLabel = [];
+                    singleExperimentObj.dataMatrix = [];
                 	singleExperimentObj.dataLoaded = 0;
-              	end
-        	end
+                end
+            end
     	end
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
@@ -45,26 +40,37 @@ classdef singleExperiment
             if (fileID == -1)
                 warning('File not found');
             else
-                dataFile = textscan(fileID,'%f,%f,%f,%f,%s');
-                time = dataFile{1};
-                accelerationX = dataFile{2};
-                accelerationY = dataFile{3};
-                accelerationZ = dataFile{4};
-                activityLabel = dataFile{5};
-                indexWalk = contains(activityLabel,'Walk');
-                indexRun = contains(activityLabel,'Run');
-                activityLabel = ones(size(activityLabel)) * singleExperimentObj.NO_ACTIVITY_CLASS;
-                activityLabel(indexWalk) = singleExperimentObj.WALK_CLASS;
-                activityLabel(indexRun) = singleExperimentObj.RUN_CLASS;
-                if (length(activityLabel) == length(accelerationX) - 1)
-                    activityLabel = [singleExperimentObj.NO_ACTIVITY_CLASS;activityLabel];
+                dataFile = textscan(fileID,singleExperimentObj.dataFormat);
+                activLab = dataFile{end};
+                if (length(activLab) == length(dataFile{1}) - 1)
+                    activLabNew = cell(length(activLab)+1,1);
+                    activLabNew{1} = '';
+                    activLabNew(2:end) = activLab;
+                    activLab = activLabNew;
                 end
-                singleExperimentObj.data.time = time;
-                singleExperimentObj.data.accelerationX = accelerationX;
-                singleExperimentObj.data.accelerationY = accelerationY;
-                singleExperimentObj.data.accelerationZ = accelerationZ;
-                singleExperimentObj.data.activityLabel = activityLabel;
+                numberOfDataChannels = length(find(singleExperimentObj.dataFormat=='%'));
+                nSamples = length(dataFile{1});
+                singleExperimentObj.dataMatrix = zeros(nSamples,numberOfDataChannels-1);
+                for i = 1 : numberOfDataChannels -1
+                    singleExperimentObj.dataMatrix(:,i) = dataFile{i};
+                end
+                singleExperimentObj.activityLabel = activLab;
+                singleExperimentObj.numClass = length(unique(activLab));
             end
+        end
+%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%new function%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+        function singleExperimentObj = activitySort(singleExperimentObj)
+            activLab = singleExperimentObj.activityLabel;
+            availableClasses = unique(activLab);
+            dataActivSorted = cell(singleExperimentObj.numClass,1);
+            for i = 1 : singleExperimentObj.numClass
+                fIndex = contains(activLab,availableClasses{i});
+                dataActivSorted{i}.dataMatrix = singleExperimentObj.dataMatrix(fIndex,:);
+                dataActivSorted{i}.class = availableClasses{i};
+            end
+            singleExperimentObj.dataActivitySorted = dataActivSorted;
         end
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
@@ -72,42 +78,38 @@ classdef singleExperiment
 		function dataHealth = checkData(singleExperimentObj)
             %Other tests need to be added to verify the data format
             dataHealth = 0;
-            lengthTime = length(singleExperimentObj.data.time);
-            lengthX = length(singleExperimentObj.data.accelerationX);
-            lengthY = length(singleExperimentObj.data.accelerationY);
-            lengthZ = length(singleExperimentObj.data.accelerationZ);
-            lengthLabel = length(singleExperimentObj.data.activityLabel);
-            if (lengthTime + lengthX + lengthY + lengthZ + lengthLabel)...
-                    /5 == lengthX && (lengthTime > 0)
+            if size(singleExperimentObj.dataMatrix,1) > 0
                 dataHealth = 1;
             end
         end
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
-		function singleExperimentObj = setData(singleExperimentObj,data)
-            if (size(data,2) ==5)
-                singleExperimentObj.data.time = data(:,1);
-                singleExperimentObj.data.accelerationX = data(:,2);
-                singleExperimentObj.data.accelerationY = data(:,3);
-                singleExperimentObj.data.accelerationZ = data(:,4);
-                singleExperimentObj.data.activityLabel = data(:,5);
+		function singleExperimentObj = setData(singleExperimentObj,data,activityLabel)
+            if (size(data,2)>1)
+                singleExperimentObj.dataMatrix = data;
+                singleExperimentObj.activityLabel = activityLabel;
+                dataHealth = checkData(singleExperimentObj);
+                singleExperimentObj.dataLoaded = 1;
+                singleExperimentObj.numClass = length(unique(activityLabel));
+                singleExperimentObj = activitySort(singleExperimentObj);
+                if ~dataHealth
+                    singleExperimentObj.dataMatrix = [];
+                    singleExperimentObj.dataLoaded = 0;
+                end
             else
                 warning('wrong data format')
             end
-		end        
+        end
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%		
 		function plot(singleExperimentObj)
-			subplot(4,1,1)
-			plot(singleExperimentObj.data.time,singleExperimentObj.data.accelerationX)
-			subplot(4,1,2)
-			plot(singleExperimentObj.data.time,singleExperimentObj.data.accelerationY)
-			subplot(4,1,3)
-			plot(singleExperimentObj.data.time,singleExperimentObj.data.accelerationZ)
-			subplot(4,1,4)
-			plot(singleExperimentObj.data.time,singleExperimentObj.data.activityLabel)
+            numDataChannels = size(singleExperimentObj.dataMatrix,2) - 1;
+            for i = 1 : numDataChannels
+                subplot(numDataChannels,1,i)
+                plot(singleExperimentObj.dataMatrix(:,1),singleExperimentObj.dataMatrix(:,i+1)) 
+            end
 		end
 	end	
 end

@@ -2,12 +2,24 @@ classdef classificationFeature
 	properties
         flagFeature_SMV_Power = 0;
         flagFeature_SMV_HighFreqPower = 0;
-        flagFeatureAccelXPower = 1;
-        flagFeatureAccelY_Power = 1;
-        flagFeatureAccelZPower = 0;
         flagFeatureAccelXHighFreqPower = 0;
         flagFeatureAccelYHighFreqPower = 0;
         flagFeatureAccelZHighFreqPower = 0;
+        
+        flagFeatureAccelXPower = 1;
+        flagFeatureAccelY_Power = 1;
+        flagFeatureAccelZPower = 1;
+        
+        flagFeatureAccelXLowPower = 1;
+        flagFeatureAccelYLowPower = 1;
+        flagFeatureAccelZLowPower = 1;
+        
+        flagFeatureAccelXDominantFreq = 1;
+        flagFeatureAccelYDominantFreq = 1;
+        flagFeatureAccelZDominantFreq = 1;
+        
+        lowFreqCutOff = 0.5;
+        highFreqCutOff = 10;
         feature = [];
         samplingTime = [];
         cutOffFreq = 3;
@@ -87,13 +99,77 @@ classdef classificationFeature
                     ,classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
                 classFeatureObj.feature = [classFeatureObj.feature feature_AccZ_HF_Power];
             end
+            if (classFeatureObj.flagFeatureAccelXLowPower)
+                feature_AccX_LF_Power = computeLowFreqPower(accelerationX...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
+                    classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_AccX_LF_Power];
+            end
+            
+            if (classFeatureObj.flagFeatureAccelYLowPower)
+                feature_AccY_LF_Power = computeLowFreqPower(accelerationY...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
+                    classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_AccY_LF_Power];
+            end
+
+            if (classFeatureObj.flagFeatureAccelZLowPower)
+                feature_AccZ_LF_Power = computeLowFreqPower(accelerationZ...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
+                    classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_AccZ_LF_Power];
+            end
+            
+            if (classFeatureObj.flagFeatureAccelXDominantFreq)
+                feature_AccX_DominantFreq = computeDominantFreq(accelerationX...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff...
+                    ,classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_AccX_DominantFreq];
+            end
+            if (classFeatureObj.flagFeatureAccelYDominantFreq)
+                feature_AccY_DominantFreq = computeDominantFreq(accelerationY...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff...
+                    ,classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_AccY_DominantFreq];
+            end
+            if (classFeatureObj.flagFeatureAccelZDominantFreq)
+                feature_AccZ_DominantFreq = computeDominantFreq(accelerationZ...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff...
+                    ,classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_AccZ_DominantFreq];
+            end
         end
-	end	
+    end
 end
 
+function lowFreqPower = computeLowFreqPower(signal,samplingTime,cutOffLowF,cutOffHighF)
+    signal = signal - mean(signal);
+    [signalFFT,frequency]=fourier(signal,samplingTime);
+    fIndex = frequency<=cutOffLowF;
+    baseLinePower = computeBaseline(frequency,signalFFT,cutOffHighF);
+    lowFreqPower = sum(signalFFT(fIndex).^2)/baseLinePower;
+end
+function dominantFreqPower = computeDominantFreq(signal,samplingTime,cutOffLowF,cutOffHighF)
+    signal = signal - mean(signal);
+    numPeakFreq = 4;
+    [signalFFT,frequency]=fourier(signal,samplingTime);
+    baseLinePower = computeBaseline(frequency,signalFFT,cutOffHighF);
+    fIndex = (frequency>cutOffLowF) & (frequency<cutOffHighF);
+    signalFFT = signalFFT(fIndex);
+    dominantFreq = zeros(numPeakFreq,1);
+    for i = 1 : numPeakFreq
+        [dominantFreq(i),fIndex] = max(signalFFT);
+        signalFFT(fIndex) = [];
+    end
+    dominantFreqPower = sum(dominantFreq.^2)/baseLinePower;
+end
 function signalPower = computePower(signal)
     signal = signal - mean(signal);
     signalPower = sum(signal.^2);
+end
+function baseline = computeBaseline(frequency,signalFFT,cutOffFreq)
+    fIndex = frequency>cutOffFreq;
+    baseline = sum(signalFFT(fIndex).^2);
 end
 function signalHighFreqPower = computeHighFreqPower(signal,samplingTime,cutOffFreq)
     signal = signal - mean(signal);
