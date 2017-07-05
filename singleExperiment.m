@@ -66,9 +66,16 @@ classdef singleExperiment
             availableClasses = unique(activLab);
             dataActivSorted = cell(singleExperimentObj.numClass,1);
             for i = 1 : singleExperimentObj.numClass
-                fIndex = contains(activLab,availableClasses{i});
+                if isempty(availableClasses{i})
+                    fIndex = find(cellfun(@isempty,activLab));
+                else
+                    fIndex = contains(activLab,availableClasses{i});
+                    fIndex = find(fIndex == 1);
+                end
+                switchingIndex = findDiscontinuity(fIndex);
                 dataActivSorted{i}.dataMatrix = singleExperimentObj.dataMatrix(fIndex,:);
                 dataActivSorted{i}.class = availableClasses{i};
+                dataActivSorted{i}.switchingIndex = switchingIndex;
             end
             singleExperimentObj.dataActivitySorted = dataActivSorted;
         end
@@ -112,4 +119,10 @@ classdef singleExperiment
             end
 		end
 	end	
+end
+function switchingIndex = findDiscontinuity(index)
+    indexDiff = index(2:end)-index(1:end-1);
+    switchingIndex = find(indexDiff~=1);
+    switchingIndex = switchingIndex + 1;
+    %switchingIndex = index;
 end
