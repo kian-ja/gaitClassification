@@ -73,6 +73,7 @@ classdef singleExperiment
                     fIndex = find(fIndex == 1);
                 end
                 switchingIndex = findDiscontinuity(fIndex);
+                switchingIndex = [switchingIndex;size(singleExperimentObj.dataMatrix(fIndex,:),1)];
                 dataActivSorted{i}.dataMatrix = singleExperimentObj.dataMatrix(fIndex,:);
                 dataActivSorted{i}.class = availableClasses{i};
                 dataActivSorted{i}.switchingIndex = switchingIndex;
