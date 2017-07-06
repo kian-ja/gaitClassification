@@ -1,9 +1,9 @@
 classdef activityClassification
 	properties
         classifierModel = [];
-        classificationRate = 4; %1Hz
+        classificationRate = 3;%in (s)
         samplingRate = 0.02;
-        plotMode = true;
+        plotMode = 1;
         trainingNumSegment = 1500;
         validationNumSegment = 200;
         trainingRatio = 0.8;
@@ -49,6 +49,38 @@ classdef activityClassification
                 end
             end
             trainingSetLabel = trainingSetLabel';
+            
+            if classTrainObj.plotMode
+                if size(trainingSetFeature,2) == 2
+                                        class1 = trainingSetFeature([1:3:4500],:);
+                    class2 = trainingSetFeature([2:3:4500],:);
+                    class3 = trainingSetFeature([3:3:4500],:);
+
+                    plot(class1(:,1),class1(:,2),'o','markerFaceColor','k','markerEdgeColor','k')
+                    hold on
+                    plot(class2(:,1),class2(:,2),'o','markerFaceColor','r','markerEdgeColor','r')
+                    plot(class3(:,1),class3(:,2),'o','markerFaceColor','b','markerEdgeColor','b')
+                    grid on
+                    xlabel('Feature 1')
+                    ylabel('Feature 2')
+                    legend(trainingSetLabel{1},trainingSetLabel{2},trainingSetLabel{3})
+                end
+                if size(trainingSetFeature,2) == 3
+                    class1 = trainingSetFeature([1:3:4500],:);
+                    class2 = trainingSetFeature([2:3:4500],:);
+                    class3 = trainingSetFeature([3:3:4500],:);
+
+                    plot3(class1(:,1),class1(:,2),class1(:,3),'o','markerFaceColor','k','markerEdgeColor','k')
+                    hold on
+                    plot3(class2(:,1),class2(:,2),class2(:,3),'o','markerFaceColor','r','markerEdgeColor','r')
+                    plot3(class3(:,1),class3(:,2),class3(:,3),'o','markerFaceColor','b','markerEdgeColor','b')
+                    grid on
+                    xlabel('Feature 1')
+                    ylabel('Feature 2')
+                    zlabel('Feature 3')
+                    legend(trainingSetLabel{1},trainingSetLabel{2},trainingSetLabel{3})
+                end
+            end
             %model = templateSVM('SaveSupportVectors','on','Kernel','linear');
             model = templateSVM('SaveSupportVectors','on','KernelFunction','linear');
             model = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',model);
@@ -73,6 +105,7 @@ classdef activityClassification
                     validationSetLabel{end+1} = labelTemp;
                 end
             end
+            
             predictValidationSetLabel = predict(model,validationSetFeature);
             tPosValid = computeTruePositive(validationSetLabel,predictValidationSetLabel);
             fPosValid = computeFalsePositive(validationSetLabel,predictValidationSetLabel);

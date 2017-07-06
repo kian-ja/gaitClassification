@@ -21,8 +21,8 @@ classdef classificationFeature
         flagFeatureAccelZHighFreqPower = 0;
         flagFeatureAccelZDominantFreq = 0;
         
-        lowFreqCutOff = 0.5;
-        highFreqCutOff = 10;
+        lowFreqCutOff = 1.5;
+        highFreqCutOff = 7;
         feature = [];
         samplingTime = [];
         cutOffFreq = 3;
@@ -38,6 +38,7 @@ classdef classificationFeature
                 classFeatureObj = createFeature(classFeatureObj,data);
             end
         end
+        
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%        
@@ -50,7 +51,11 @@ classdef classificationFeature
                     accelerationX = data(:,2);
                     accelerationY = data(:,3);
                     accelerationZ = data(:,4);
-                    SMV = accelerationX.^2 + accelerationY.^2 +accelerationZ.^2;
+                    SMV = sqrt(accelerationX.^2 + accelerationY.^2 +accelerationZ.^2);
+                    accelerationX = accelerationX - mean(accelerationX);
+                    accelerationY = accelerationY - mean(accelerationY);
+                    accelerationZ = accelerationZ - mean(accelerationZ);
+                    SMV = SMV - mean(SMV);
                 else
                     warning('Input not supported')
                 end
@@ -59,7 +64,11 @@ classdef classificationFeature
                 accelerationX = data.dataMatrix(:,2);
                 accelerationY = data.dataMatrix(:,3);
                 accelerationZ = data.dataMatrix(:,4);
-                SMV = accelerationX.^2 + accelerationY.^2 +accelerationZ.^2;
+                SMV = sqrt(accelerationX.^2 + accelerationY.^2 +accelerationZ.^2);
+                accelerationX = accelerationX - mean(accelerationX);
+                accelerationY = accelerationY - mean(accelerationY);
+                accelerationZ = accelerationZ - mean(accelerationZ);
+                SMV = SMV - mean(SMV);
             else
                     warning('Input not supported')
             end
@@ -168,14 +177,16 @@ function lowFreqPower = computeLowFreqPower(signal,samplingTime,cutOffLowF,cutOf
     signal = signal - mean(signal);
     [signalFFT,frequency]=fourier(signal,samplingTime);
     fIndex = frequency<=cutOffLowF;
-    baseLinePower = computeBaseline(frequency,signalFFT,cutOffHighF);
+    %baseLinePower = computeBaseline(frequency,signalFFT,cutOffHighF);
+    baseLinePower = computePower(signal);
     lowFreqPower = sum(signalFFT(fIndex).^2)/baseLinePower;
 end
 function dominantFreqPower = computeDominantFreq(signal,samplingTime,cutOffLowF,cutOffHighF)
     signal = signal - mean(signal);
     numPeakFreq = 4;
     [signalFFT,frequency]=fourier(signal,samplingTime);
-    baseLinePower = computeBaseline(frequency,signalFFT,cutOffHighF);
+    %baseLinePower = computeBaseline(frequency,signalFFT,cutOffHighF);
+    baseLinePower = computePower(signal);
     fIndex = (frequency>cutOffLowF) & (frequency<cutOffHighF);
     signalFFT = signalFFT(fIndex);
     dominantFreq = zeros(numPeakFreq,1);
@@ -187,7 +198,7 @@ function dominantFreqPower = computeDominantFreq(signal,samplingTime,cutOffLowF,
 end
 function signalPower = computePower(signal)
     signal = signal - mean(signal);
-    signalPower = sum(signal.^2);
+    signalPower = sum(signal.^2) / length(signal);
 end
 function baseline = computeBaseline(frequency,signalFFT,cutOffFreq)
     fIndex = frequency>cutOffFreq;
