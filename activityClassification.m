@@ -36,19 +36,15 @@ classdef activityClassification
                 (data,classTrainObj.trainingRatio);
             
             %Training
-            dataTrainSplitActivity = ...
-                splitDataActivity(dataTraining);
-            dataValidSplitActivity = ...
-                splitDataActivity(dataValidation);
             trainingSetFeature = [];
             trainingSetLabel = [];
             for i = 1 : classTrainObj.trainingNumSegment
-                for j = 1 : length(dataTrainSplitActivity)
+                for j = 1 : data.numClassesFound
                     dataTrainSegmentThisActivity = randomSelect(classTrainObj...
-                    ,dataTrainSplitActivity{j});
+                    ,dataTraining{j});
                     featureTemp = classificationFeature(dataTrainSegmentThisActivity);
                     trainingSetFeature = [trainingSetFeature;featureTemp.feature];
-                    labelTemp = dataTrainSplitActivity{j}.data.activityLabel(1);
+                    labelTemp = dataTraining{j}.data.activityLabel(1);
                     trainingSetLabel = [trainingSetLabel;labelTemp];
                 end
             end
@@ -140,47 +136,7 @@ function [dataTrain,dataValid] = splitDataTrainValid(data,trainingRatio)
         end
     end
 end
-            
-function dataActivitySplit = splitDataActivity(data)
-    if (class(data) == 'singleExperiment')
-        indexNotScored = data.data.activityLabel == data.NOT_SCORED_CLASS;
-        indexNoActivity = data.data.activityLabel == data.NO_ACTIVITY_CLASS;
-        indexWalk = data.data.activityLabel == data.WALK_CLASS;
-        indexRun = data.data.activityLabel == data.RUN_CLASS;
-        dataNotScored = [data.data.time(indexNotScored,:),...
-            data.data.accelerationX(indexNotScored,:),...
-            data.data.accelerationY(indexNotScored,:),...
-            data.data.accelerationZ(indexNotScored,:),...
-            data.data.activityLabel(indexNotScored,:)];
-        dataNoActivity = [data.data.time(indexNoActivity,:),...
-            data.data.accelerationX(indexNoActivity,:),...
-            data.data.accelerationY(indexNoActivity,:),...
-            data.data.accelerationZ(indexNoActivity,:),...
-            data.data.activityLabel(indexNoActivity,:)];
-        dataWalk = [data.data.time(indexWalk,:),...
-            data.data.accelerationX(indexWalk,:),...
-            data.data.accelerationY(indexWalk,:),...
-            data.data.accelerationZ(indexWalk,:),...
-            data.data.activityLabel(indexWalk,:)];
-        dataRun = [data.data.time(indexRun,:),...
-            data.data.accelerationX(indexRun,:),...
-            data.data.accelerationY(indexRun,:),...
-            data.data.accelerationZ(indexRun,:),...
-            data.data.activityLabel(indexRun,:)];
-        dataActivitySplit = cell(3,1);
-        dataActivitySplit{1} = singleExperiment;
-        dataActivitySplit{1}.samplingTime = data.samplingTime;
-        dataActivitySplit{1} = setData(dataActivitySplit{1},dataNoActivity);
-        dataActivitySplit{2} = singleExperiment;
-        dataActivitySplit{2}.samplingTime = data.samplingTime;
-        dataActivitySplit{2} = setData(dataActivitySplit{2},dataWalk);
-        dataActivitySplit{3} = singleExperiment;
-        dataActivitySplit{3}.samplingTime = data.samplingTime;
-        dataActivitySplit{3} = setData(dataActivitySplit{3},dataRun);
-    else
-        warning('splitDataActivity: input data not supported')
-    end
-end
+
 function dataSegment = randomSelect(classTrainObj,data)
     if (class(data) == 'singleExperiment')
         segLength = classTrainObj.classificationRate;
