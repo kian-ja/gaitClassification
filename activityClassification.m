@@ -5,8 +5,8 @@ classdef activityClassification
         samplingRate = 0.02;
         plotMode = true;
         trainingNumSegment = 500;
-        validationNumSegment = 500;
-        trainingRatio = 0.5;
+        validationNumSegment = 200;
+        trainingRatio = 0.8;
         truePositiveIdentification = [];
         falsePositiveIdentification = [];
         truePositiveValidation = [];
@@ -49,8 +49,10 @@ classdef activityClassification
                 end
             end
             trainingSetLabel = trainingSetLabel';
-            model = templateSVM('SaveSupportVectors','on');
+            %model = templateSVM('SaveSupportVectors','on','Kernel','linear');
+            model = templateSVM('SaveSupportVectors','on','KernelFunction','linear');
             model = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',model);
+            %model = fitctree(trainingSetFeature,trainingSetLabel);
             classTrainObj.classifierModel = model;
             predictTrainingSetLabel = predict(model,trainingSetFeature);
             

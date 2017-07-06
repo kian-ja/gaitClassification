@@ -2,6 +2,7 @@ classdef classificationFeature
 	properties
         flagFeature_SMV_Power = 0;
         flagFeature_SMV_HighFreqPower = 0;
+        
         flagFeatureAccelXHighFreqPower = 0;
         flagFeatureAccelYHighFreqPower = 0;
         flagFeatureAccelZHighFreqPower = 0;
