@@ -52,9 +52,9 @@ classdef classificationFeature
                 end
             elseif (class(data) == 'singleExperiment')
                 classFeatureObj.samplingTime = data.samplingTime;
-                accelerationX = data.data.accelerationX;
-                accelerationY = data.data.accelerationY;
-                accelerationZ = data.data.accelerationZ;
+                accelerationX = data.dataMatrix(:,2);
+                accelerationY = data.dataMatrix(:,3);
+                accelerationZ = data.dataMatrix(:,4);
             else
                     warning('Input not supported')
             end
