@@ -3,6 +3,7 @@ classdef populationExperiment
         directory = '';
     	dataLoaded = 0;
         numberOfFilesFound = 0;
+        numClassesFound = 0;
 		data = [];
         dataActivitySorted = [];
 	end
@@ -59,6 +60,7 @@ classdef populationExperiment
                     end
                 end
             end
+            populationExperimentObj.numClassesFound = numClasses;
             populationExperimentObj.dataActivitySorted = cell(numClasses,1);
             for i = 1 : numClasses
                 populationExperimentObj.dataActivitySorted{i}.dataMatrix = [];
