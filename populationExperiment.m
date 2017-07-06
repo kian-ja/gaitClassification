@@ -101,7 +101,7 @@ classdef populationExperiment
                     end
                 end
             end
- 
+        populationExperimentObj.dataLoaded = 1;
         end
 	end	
 end
