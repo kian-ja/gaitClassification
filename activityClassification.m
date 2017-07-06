@@ -44,10 +44,11 @@ classdef activityClassification
                     ,dataTraining,j);
                     featureTemp = classificationFeature(dataTrainSegmentThisActivity);
                     trainingSetFeature = [trainingSetFeature;featureTemp.feature];
-                    labelTemp = dataTraining{j}.data.activityLabel(1);
-                    trainingSetLabel = [trainingSetLabel;labelTemp];
+                    labelTemp = dataTraining.dataActivitySorted{j}.class;
+                    trainingSetLabel{end+1} = labelTemp;
                 end
             end
+            trainingSetLabel = trainingSetLabel';
             model = templateSVM('SaveSupportVectors','on');
             model = fitcecoc(trainingSetFeature,trainingSetLabel,'Learners',model);
             classTrainObj.classifierModel = model;
