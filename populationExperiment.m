@@ -85,9 +85,9 @@ classdef populationExperiment
                         thisExperiment.dataActivitySorted{j}.switchingIndex];
                         nSampClassesPrevExp(fIndex,1) = ...
                             nSampClassesPrevExp(fIndex,1) + ...
-                            size(thisExperiment.dataActivitySorted{1}.dataMatrix,1);
+                            size(thisExperiment.dataActivitySorted{fIndex}.dataMatrix,1);
                     else
-                        fIndex = find(contains(classesPopulation,thisExperimentClass)==1);
+                        fIndex = find(strcmp(classesPopulation,thisExperimentClass)==1);
                         populationExperimentObj.dataActivitySorted{fIndex,1}.dataMatrix...
                         = [populationExperimentObj.dataActivitySorted{fIndex,1}.dataMatrix;...
                         thisExperiment.dataActivitySorted{j}.dataMatrix];
@@ -99,7 +99,7 @@ classdef populationExperiment
                         thisExperiment.dataActivitySorted{j}.switchingIndex];
                         nSampClassesPrevExp(fIndex,1) = ...
                         nSampClassesPrevExp(fIndex,1) + ...
-                        size(thisExperiment.dataActivitySorted{1}.dataMatrix,1);
+                        size(thisExperiment.dataActivitySorted{j}.dataMatrix,1);
                     end
                 end
             end
