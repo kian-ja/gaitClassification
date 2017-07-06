@@ -8,16 +8,16 @@ classdef classificationFeature
         flagFeatureAccelZHighFreqPower = 0;
         
         flagFeatureAccelXPower = 1;
-        flagFeatureAccelY_Power = 1;
-        flagFeatureAccelZPower = 1;
+        flagFeatureAccelY_Power = 0;
+        flagFeatureAccelZPower = 0;
         
         flagFeatureAccelXLowPower = 1;
-        flagFeatureAccelYLowPower = 1;
-        flagFeatureAccelZLowPower = 1;
+        flagFeatureAccelYLowPower = 0;
+        flagFeatureAccelZLowPower = 0;
         
-        flagFeatureAccelXDominantFreq = 1;
+        flagFeatureAccelXDominantFreq = 0;
         flagFeatureAccelYDominantFreq = 1;
-        flagFeatureAccelZDominantFreq = 1;
+        flagFeatureAccelZDominantFreq = 0;
         
         lowFreqCutOff = 0.5;
         highFreqCutOff = 10;
@@ -170,7 +170,8 @@ function signalPower = computePower(signal)
 end
 function baseline = computeBaseline(frequency,signalFFT,cutOffFreq)
     fIndex = frequency>cutOffFreq;
-    baseline = sum(signalFFT(fIndex).^2);
+    %baseline = sum(signalFFT(fIndex).^2);
+    baseline = sum(signalFFT.^2);
 end
 function signalHighFreqPower = computeHighFreqPower(signal,samplingTime,cutOffFreq)
     signal = signal - mean(signal);

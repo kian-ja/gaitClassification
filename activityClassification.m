@@ -4,7 +4,7 @@ classdef activityClassification
         classificationRate = 4; %1Hz
         samplingRate = 0.02;
         plotMode = true;
-        trainingNumSegment = 500;
+        trainingNumSegment = 1500;
         validationNumSegment = 200;
         trainingRatio = 0.8;
         truePositiveIdentification = [];
