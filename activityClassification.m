@@ -62,15 +62,13 @@ classdef activityClassification
             validationSetFeature = [];
             validationSetLabel = [];
             for i = 1 : classTrainObj.validationNumSegment
-                for j = 1 : length(dataValidSplitActivity)
+                for j = 1 : data.numClassesFound
                     dataValidSegmentThisActivity = randomSelect(classTrainObj...
-                    ,dataValidSplitActivity{j});
-                    if ~isempty(dataValidSegmentThisActivity)
-                        featureTemp = classificationFeature(dataValidSegmentThisActivity);
-                        validationSetFeature = [validationSetFeature;featureTemp.feature];
-                        labelTemp = dataValidSplitActivity{j}.data.activityLabel(1);
-                        validationSetLabel = [validationSetLabel;labelTemp];
-                    end
+                    ,dataValidation,j);
+                    featureTemp = classificationFeature(dataValidSegmentThisActivity);
+                    validationSetFeature = [validationSetFeature;featureTemp.feature];
+                    labelTemp = dataValidation.dataActivitySorted{j}.class;
+                    validationSetLabel{end+1} = labelTemp;
                 end
             end
             predictValidationSetLabel = predict(model,validationSetFeature);
@@ -87,10 +85,11 @@ function truePositive = computeTruePositive(signalTrue,signalMeasured)
     numClasses = length(classes);
     truePositive = 0;
     for i = 1 : numClasses
-        indexThisClass = find(signalTrue == classes(i));
+        indexThisClass = contains(signalTrue, classes(i));
+        indexThisClass = find(indexThisClass==1);
         numThisClassOccured = length(indexThisClass);
         probabilityThisClass = numThisClassOccured/length(signalTrue);
-        numThisClassPredicted = sum(signalMeasured (indexThisClass) == classes(i));
+        numThisClassPredicted = sum(contains(signalMeasured (indexThisClass) , classes(i)));
         truePositive = truePositive + ...
             numThisClassPredicted/numThisClassOccured * probabilityThisClass;
     end
@@ -100,10 +99,11 @@ function falsePositive = computeFalsePositive(signalTrue,signalMeasured)
     numClasses = length(classes);
     falsePositive = 0;
     for i = 1 : numClasses
-        indexNotThisClass = find(signalTrue ~= classes(i));
+        indexNotThisClass = strcmp(signalTrue, classes(i));
+        indexNotThisClass = find(indexNotThisClass ==0);
         numNotThisClassOccured = length(indexNotThisClass);
         probabilityNotThisClass = numNotThisClassOccured/length(signalTrue);
-        numThisClassPredicted = sum(signalMeasured (indexNotThisClass) == classes(i));
+        numThisClassPredicted = sum(strcmp(signalMeasured (indexNotThisClass),classes(i)));
         falsePositive = falsePositive + ...
             numThisClassPredicted/numNotThisClassOccured * probabilityNotThisClass;
     end
