@@ -4,31 +4,26 @@ classdef populationExperiment
     	dataLoaded = 0;
         numberOfFilesFound = 0;
 		data = [];
-        %Concatenated Data
-        dataConcatenated = [];
-        notScoredConcatenated = [];
-        noActiveConcatenated = [];
-        walkConcatenated = [];
-        runConcatenated = [];
+        dataActivitySorted = [];
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function populationExperimentObj = populationExperiment(directory)
-			if (nargin < 1)
+            if (nargin < 1)
             	disp('current directory will be considered')
                 populationExperimentObj = readAllFiles(populationExperimentObj);
             else
                 populationExperimentObj.directory = directory;
             	populationExperimentObj = readAllFiles(populationExperimentObj,directory);
-        	end
+            end
     	end
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
 		function populationExperimentObj = readAllFiles(populationExperimentObj,directory)
-			if (nargin < 2)
+            if (nargin < 2)
                 listOfFiles = dir();
                 directory = '';
             else
@@ -51,47 +46,62 @@ classdef populationExperiment
             numberOfFiles = length(fileNames);
             populationExperimentObj.numberOfFilesFound = numberOfFiles;
             populationExperimentObj.data = cell(numberOfFiles,1);
+            numClasses = 0;
+            classesPopulation = {};
             for i = 1 : numberOfFiles
                 thisExperiment = singleExperiment([directory,'/',fileNames{i}]);
                 populationExperimentObj.data{i} = thisExperiment;
-                %populating concatenated data
-                time = [time;dataThisExperiment.data.time];
-                accelerationX = [accelerationX;dataThisExperiment.data.accelerationX];
-                accelerationY = [accelerationY;dataThisExperiment.data.accelerationY];
-                accelerationZ = [accelerationZ;dataThisExperiment.data.accelerationZ];
-                activityLabel = [activityLabel;dataThisExperiment.data.activityLabel];
+                classesThisExperiment = unique(thisExperiment.activityLabel);
+                for j = 1 : length(classesThisExperiment)
+                    if ~any(strcmp(classesPopulation,classesThisExperiment{j}))
+                        classesPopulation{length(classesPopulation)+1,1} = classesThisExperiment{j};
+                        numClasses = numClasses + 1;
+                    end
+                end
             end
-            dataCat = [time accelerationX accelerationY ...
-                accelerationZ activityLabel];
-            populationExperimentObj.dataConcatenated = singleExperiment;
-            populationExperimentObj.dataConcatenated = setData(...
-                populationExperimentObj.dataConcatenated,dataCat);
-            populationExperimentObj.dataLoaded = 1;
-            NOT_SCORED_CLASS = populationExperimentObj.dataConcatenated.NOT_SCORED_CLASS;
-            NO_ACTIVITY_CLASS = populationExperimentObj.dataConcatenated.NO_ACTIVITY_CLASS;
-            WALK_CLASS = populationExperimentObj.dataConcatenated.WALK_CLASS;
-            RUN_CLASS = populationExperimentObj.dataConcatenated.RUN_CLASS;
-            
-            indexNotScored = dataCat(:,5) == NOT_SCORED_CLASS;
-            indexNoActivity = dataCat(:,5) == NO_ACTIVITY_CLASS;
-            indexWalk = dataCat(:,5) == WALK_CLASS;
-            indexRun = dataCat(:,5) == RUN_CLASS;
-            dataCatNotScored = dataCat(indexNotScored,:);
-            dataCatNoActivity = dataCat(indexNoActivity,:);
-            dataCatWalk = dataCat(indexWalk,:);
-            dataCatRun = dataCat(indexRun,:);
-            populationExperimentObj.notScoredConcatenated = singleExperiment;
-            populationExperimentObj.notScoredConcatenated = setData(...
-                populationExperimentObj.notScoredConcatenated,dataCatNotScored);
-            populationExperimentObj.noActiveConcatenated = singleExperiment;
-            populationExperimentObj.noActiveConcatenated = setData(...
-                populationExperimentObj.noActiveConcatenated,dataCatNoActivity);
-            populationExperimentObj.walkConcatenated = singleExperiment;
-            populationExperimentObj.walkConcatenated = setData(...
-                populationExperimentObj.walkConcatenated,dataCatWalk);
-            populationExperimentObj.runConcatenated = singleExperiment;
-            populationExperimentObj.runConcatenated = setData(...
-                populationExperimentObj.runConcatenated,dataCatRun);
+            populationExperimentObj.dataActivitySorted = cell(numClasses,1);
+            for i = 1 : numClasses
+                populationExperimentObj.dataActivitySorted{i}.dataMatrix = [];
+                populationExperimentObj.dataActivitySorted{i}.class = '';
+                populationExperimentObj.dataActivitySorted{i}.switchingIndex = [];
+            end
+            nSampClassesPrevExp = zeros (numClasses,1);
+            for i = 1 : numberOfFiles
+                thisExperiment = populationExperimentObj.data{i};
+                for j = 1 : thisExperiment.numClass
+                    thisExperimentClass = thisExperiment.dataActivitySorted{j}.class;
+                    if isempty(thisExperimentClass)
+                        fIndex = find(cellfun(@isempty,classesPopulation)==1);
+                        populationExperimentObj.dataActivitySorted{fIndex,1}.dataMatrix...
+                        = [populationExperimentObj.dataActivitySorted{fIndex,1}.dataMatrix;...
+                        thisExperiment.dataActivitySorted{j}.dataMatrix];
+                        populationExperimentObj.dataActivitySorted{fIndex}.class...
+                        = '';
+                        populationExperimentObj.dataActivitySorted{fIndex,1}.switchingIndex...
+                        = [populationExperimentObj.dataActivitySorted{fIndex,1}.switchingIndex;...
+                        nSampClassesPrevExp(fIndex,1) + ...
+                        thisExperiment.dataActivitySorted{j}.switchingIndex];
+                        nSampClassesPrevExp(fIndex,1) = ...
+                            nSampClassesPrevExp(fIndex,1) + ...
+                            size(thisExperiment.dataActivitySorted{1}.dataMatrix,1);
+                    else
+                        fIndex = find(contains(classesPopulation,thisExperimentClass)==1);
+                        populationExperimentObj.dataActivitySorted{fIndex,1}.dataMatrix...
+                        = [populationExperimentObj.dataActivitySorted{fIndex,1}.dataMatrix;...
+                        thisExperiment.dataActivitySorted{j}.dataMatrix];
+                        populationExperimentObj.dataActivitySorted{fIndex,1}.class...
+                        = thisExperiment.dataActivitySorted{j}.class;
+                        populationExperimentObj.dataActivitySorted{fIndex,1}.switchingIndex...
+                        = [populationExperimentObj.dataActivitySorted{fIndex,1}.switchingIndex;...
+                        nSampClassesPrevExp(fIndex,1) + ...
+                        thisExperiment.dataActivitySorted{j}.switchingIndex];
+                        nSampClassesPrevExp(fIndex,1) = ...
+                        nSampClassesPrevExp(fIndex,1) + ...
+                        size(thisExperiment.dataActivitySorted{1}.dataMatrix,1);
+                    end
+                end
+            end
+ 
         end
 	end	
 end
