@@ -32,7 +32,8 @@ classdef activityClassification
                 
                 model = classTrainObj.classifierModel;
                 nSample = size(signal.dataMatrix,1);
-                samplePerSegment = (classTrainObj.classificationPredictionRate/classTrainObj.samplingTime);
+                ts = classTrainObj.samplingTime;
+                samplePerSegment = (classTrainObj.classificationPredictionRate/ts);
                 nSeg = floor(nSample / samplePerSegment);
                 predictionSegment = cell(nSeg,1);
                 classTrainWindow = classTrainObj.classificationTrainingRate/0.02;
@@ -61,9 +62,28 @@ classdef activityClassification
                 trueClassTimeHistory = trueClassTimeHistory(1:nSeg * samplePerSegment);
                 prediction = predictionSegment;
                 if nargout < 1
-                    time = 0.02: 0.02:1;
+                    time = ts: ts:10;
                     time = time';
-                    plotRealTime(signal,prediction)
+                    numChannel = size(signal.dataMatrix,2) - 1;
+                    dataThisFrame = zeros(length(time),numChannel+1);
+                    for i = 2 : nSeg
+                        time = time + classTrainObj.classificationPredictionRate;
+                        dataSegment = signal.dataMatrix((i-1)*samplePerSegment + 1:i*samplePerSegment,:);
+                        dataThisFrame = shiftFrame(dataThisFrame,dataSegment);
+                        subplot(3,1,1)
+                        plot(time,dataThisFrame(:,2))
+                        ylim([-2,2])
+                        title('Acceleration X')
+                        subplot(3,1,2)
+                        plot(time,dataThisFrame(:,3))
+                        title('Acceleration Y')
+                        ylim([-2,2])
+                        subplot(3,1,3)
+                        plot(time,dataThisFrame(:,4))
+                        title('Acceleration Z')
+                        ylim([-2,2])
+                        pause(1);
+                    end
                 else
                 end
             else
@@ -251,5 +271,10 @@ function dataSegment = randomSelect(classTrainObj,data,numClassSelect)
     end
     
 end
-        
+function dataFrame = shiftFrame(dataFrame,dataSegment)
+    nSampleShift = size(dataSegment,1);
+    dataFrame = circshift(dataFrame,-nSampleShift);
+    dataFrame (end-nSampleShift+1:end,:) = dataSegment;
+end
+
         
