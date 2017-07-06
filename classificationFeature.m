@@ -1,22 +1,24 @@
 classdef classificationFeature
 	properties
-        flagFeature_SMV_Power = 0;
+        flagFeature_SMV_Power = 1;
+        flagFeature_SMV_LowFreqPower = 1;
         flagFeature_SMV_HighFreqPower = 0;
+        flagFeature_SMV_DominantFreq = 1;
         
+        flagFeatureAccelXPower = 0;
+        flagFeatureAccelXLowFreqPower = 0;
         flagFeatureAccelXHighFreqPower = 0;
-        flagFeatureAccelYHighFreqPower = 0;
-        flagFeatureAccelZHighFreqPower = 0;
-        
-        flagFeatureAccelXPower = 1;
-        flagFeatureAccelY_Power = 0;
-        flagFeatureAccelZPower = 0;
-        
-        flagFeatureAccelXLowPower = 1;
-        flagFeatureAccelYLowPower = 0;
-        flagFeatureAccelZLowPower = 0;
-        
         flagFeatureAccelXDominantFreq = 0;
-        flagFeatureAccelYDominantFreq = 1;
+        
+        flagFeatureAccelY_Power = 0;
+        flagFeatureAccelYLowFreqPower = 0;
+        flagFeatureAccelYHighFreqPower = 0;
+        flagFeatureAccelYDominantFreq = 0;
+        
+        
+        flagFeatureAccelZPower = 0;
+        flagFeatureAccelZLowFreqPower = 0;
+        flagFeatureAccelZHighFreqPower = 0;
         flagFeatureAccelZDominantFreq = 0;
         
         lowFreqCutOff = 0.5;
@@ -48,6 +50,7 @@ classdef classificationFeature
                     accelerationX = data(:,2);
                     accelerationY = data(:,3);
                     accelerationZ = data(:,4);
+                    SMV = accelerationX.^2 + accelerationY.^2 +accelerationZ.^2;
                 else
                     warning('Input not supported')
                 end
@@ -56,22 +59,16 @@ classdef classificationFeature
                 accelerationX = data.dataMatrix(:,2);
                 accelerationY = data.dataMatrix(:,3);
                 accelerationZ = data.dataMatrix(:,4);
+                SMV = accelerationX.^2 + accelerationY.^2 +accelerationZ.^2;
             else
                     warning('Input not supported')
             end
                 
             classFeatureObj.feature = [];
-            
+            %Signal power
             if (classFeatureObj.flagFeature_SMV_Power)
-                feature_SMV_Power = computePower(accelerationX.^2+...
-                    accelerationY.^2+accelerationZ.^2);
+                feature_SMV_Power = computePower(SMV);
                 classFeatureObj.feature = [classFeatureObj.feature feature_SMV_Power];
-            end
-            if (classFeatureObj.flagFeature_SMV_HighFreqPower)
-                feature_SMV_HF_Power = computeHighFreqPower(accelerationX.^2+...
-                    accelerationY.^2+accelerationZ.^2,...
-                    classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
-                classFeatureObj.feature = [classFeatureObj.feature feature_SMV_HF_Power];
             end
             if (classFeatureObj.flagFeatureAccelXPower)
                 feature_AccX_Power = computePower(accelerationX);
@@ -84,6 +81,17 @@ classdef classificationFeature
             if (classFeatureObj.flagFeatureAccelZPower)
                 feature_AccZ_Power = computePower(accelerationZ);
                 classFeatureObj.feature = [classFeatureObj.feature feature_AccZ_Power];
+            end
+            if (classFeatureObj.flagFeature_SMV_HighFreqPower)
+                feature_SMV_HF_Power = computeHighFreqPower(SMV,...
+                    classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
+                classFeatureObj.feature = [classFeatureObj.feature feature_SMV_HF_Power];
+            end
+            %Signal high frequency power
+            if (classFeatureObj.flagFeature_SMV_HighFreqPower)
+                feature_SMV_HF_Power = computeHighFreqPower(SMV...
+                    ,classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
+                classFeatureObj.feature = [classFeatureObj.feature feature_SMV_HF_Power];
             end
             if (classFeatureObj.flagFeatureAccelXHighFreqPower)
                 feature_AccX_HF_Power = computeHighFreqPower(accelerationX...
@@ -100,27 +108,40 @@ classdef classificationFeature
                     ,classFeatureObj.samplingTime,classFeatureObj.cutOffFreq);
                 classFeatureObj.feature = [classFeatureObj.feature feature_AccZ_HF_Power];
             end
-            if (classFeatureObj.flagFeatureAccelXLowPower)
+            %Signal low frequency power
+            if (classFeatureObj.flagFeature_SMV_LowFreqPower)
+                feature_SMV_LF_Power = computeLowFreqPower(SMV...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
+                    classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_SMV_LF_Power];
+            end
+            if (classFeatureObj.flagFeatureAccelXLowFreqPower)
                 feature_AccX_LF_Power = computeLowFreqPower(accelerationX...
                     ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
                     classFeatureObj.highFreqCutOff);
                 classFeatureObj.feature = [classFeatureObj.feature feature_AccX_LF_Power];
             end
             
-            if (classFeatureObj.flagFeatureAccelYLowPower)
+            if (classFeatureObj.flagFeatureAccelYLowFreqPower)
                 feature_AccY_LF_Power = computeLowFreqPower(accelerationY...
                     ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
                     classFeatureObj.highFreqCutOff);
                 classFeatureObj.feature = [classFeatureObj.feature feature_AccY_LF_Power];
             end
 
-            if (classFeatureObj.flagFeatureAccelZLowPower)
+            if (classFeatureObj.flagFeatureAccelZLowFreqPower)
                 feature_AccZ_LF_Power = computeLowFreqPower(accelerationZ...
                     ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff,...
                     classFeatureObj.highFreqCutOff);
                 classFeatureObj.feature = [classFeatureObj.feature feature_AccZ_LF_Power];
             end
-            
+            %Dominant frequency power
+            if (classFeatureObj.flagFeature_SMV_DominantFreq)
+                feature_SMV_DominantFreq = computeDominantFreq(SMV...
+                    ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff...
+                    ,classFeatureObj.highFreqCutOff);
+                classFeatureObj.feature = [classFeatureObj.feature feature_SMV_DominantFreq];
+            end
             if (classFeatureObj.flagFeatureAccelXDominantFreq)
                 feature_AccX_DominantFreq = computeDominantFreq(accelerationX...
                     ,classFeatureObj.samplingTime,classFeatureObj.lowFreqCutOff...
