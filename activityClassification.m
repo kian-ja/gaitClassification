@@ -41,7 +41,7 @@ classdef activityClassification
             for i = 1 : classTrainObj.trainingNumSegment
                 for j = 1 : data.numClassesFound
                     dataTrainSegmentThisActivity = randomSelect(classTrainObj...
-                    ,dataTraining{j});
+                    ,dataTraining,j);
                     featureTemp = classificationFeature(dataTrainSegmentThisActivity);
                     trainingSetFeature = [trainingSetFeature;featureTemp.feature];
                     labelTemp = dataTraining{j}.data.activityLabel(1);
@@ -137,22 +137,25 @@ function [dataTrain,dataValid] = splitDataTrainValid(data,trainingRatio)
     end
 end
 
-function dataSegment = randomSelect(classTrainObj,data)
-    if (class(data) == 'singleExperiment')
+function dataSegment = randomSelect(classTrainObj,data,numClassSelect)
+    if (class(data) == 'populationExperiment')
         segLength = classTrainObj.classificationRate;
         samplingRate = classTrainObj.samplingRate;
         segLength = floor(segLength/samplingRate);
-        if ((length(data.data.time)-segLength-1)>1)
-            segmentInitPoint = randi([1 length(data.data.time)-segLength-1]);
+        nSamp = size(data.dataActivitySorted{numClassSelect}.dataMatrix,1);
+        if ((nSamp-segLength-1)>1)
+            containsDiscontin = 1;
+            while containsDiscontin
+                segmentInitPoint = randi([1 nSamp-segLength-1]);
+                selectedRange = [segmentInitPoint:segmentInitPoint+segLength-1];
+                containsDiscontin = sum(ismember(selectedRange,data.dataActivitySorted{numClassSelect}.switchingIndex));
+            end
             dataSegment = singleExperiment;
-            dataSegment.samplingTime = data.samplingTime;
-            dataSegmentData = [...
-                data.data.time(segmentInitPoint:segmentInitPoint+segLength-1),...
-                data.data.accelerationX(segmentInitPoint:segmentInitPoint+segLength-1),...
-                data.data.accelerationY(segmentInitPoint:segmentInitPoint+segLength-1),...
-                data.data.accelerationZ(segmentInitPoint:segmentInitPoint+segLength-1),...
-                data.data.activityLabel(segmentInitPoint:segmentInitPoint+segLength-1)];
-            dataSegment = setData(dataSegment,dataSegmentData);
+            selectedDataMatrix = ...
+            data.dataActivitySorted{numClassSelect}.dataMatrix(segmentInitPoint:segmentInitPoint+segLength-1,:);
+            thisClass = data.dataActivitySorted{numClassSelect}.class;
+            activityLabel = repmat({thisClass},segLength,1);
+            dataSegment = setData(dataSegment,selectedDataMatrix,activityLabel);
         else
             dataSegment = [];
             warning('Not enough data point for this class')
