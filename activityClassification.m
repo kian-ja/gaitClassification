@@ -29,7 +29,8 @@ classdef activityClassification
             %Need to write this more general to accept more than 3 
             %activation types
             if (class(data) == 'populationExperiment')
-                data = data.dataConcatenated;
+                %data = data.dataConcatenated;
+                %data = data.dataActivitySorted;
             end
             [dataTraining,dataValidation] = splitDataTrainValid...
                 (data,classTrainObj.trainingRatio);
@@ -111,35 +112,32 @@ function falsePositive = computeFalsePositive(signalTrue,signalMeasured)
     end
 end
 function [dataTrain,dataValid] = splitDataTrainValid(data,trainingRatio)
-    if (class(data) == 'singleExperiment')
-        if trainingRatio >1
-            warning('ratio must be less than 1')
-        else
-            dataTrain = singleExperiment;
-            dataTrain.samplingTime = data.samplingTime;
-            dataValid = singleExperiment;
-            dataValid.samplingTime = data.samplingTime;
-            dataLength = length(data.data.time);
-            trainingLength = floor(dataLength * trainingRatio);
-            dataTrainArray = [data.data.time(1:trainingLength),...
-                data.data.accelerationX(1:trainingLength),...
-                data.data.accelerationY(1:trainingLength),...
-                data.data.accelerationZ(1:trainingLength),...
-                data.data.activityLabel(1:trainingLength)];
-            
-            dataValidArray = [data.data.time(trainingLength+1:end),...
-                data.data.accelerationX(trainingLength+1:end),...
-                data.data.accelerationY(trainingLength+1:end),...
-                data.data.accelerationZ(trainingLength+1:end),...
-                data.data.activityLabel(trainingLength+1:end)];
-            dataTrain = setData(dataTrain,dataTrainArray);
-            dataValid = setData(dataValid,dataValidArray);
-        end
-        
+    if trainingRatio >1
+        warning('ratio must be less than 1')
     else
-        dataTrain = [];
-        dataValid = [];
-        warning('splitDataTrainValid: input data not supported...')
+        dataTrain = data;
+        dataValid = data;
+        dataTrain.data = [];
+        dataValid.data = [];
+        for i = 1 : data.numClassesFound
+            dataLengthThisClass = size(data.dataActivitySorted{i}.dataMatrix,1);
+
+            trainingLength = floor(dataLengthThisClass * trainingRatio);
+            dataTrain.dataActivitySorted{i}.dataMatrix =...
+            data.dataActivitySorted{i}.dataMatrix(1:trainingLength,:);
+            dataTrain.dataActivitySorted{i}.switchingIndex =...
+            data.dataActivitySorted{i}.switchingIndex(...
+            data.dataActivitySorted{i}.switchingIndex < trainingLength);
+            dataTrain.dataActivitySorted{i}.switchingIndex = ...
+                [dataTrain.dataActivitySorted{i}.switchingIndex;trainingLength];
+
+            dataValid.dataActivitySorted{i}.dataMatrix =...
+            data.dataActivitySorted{i}.dataMatrix(trainingLength + 1 :end,:);
+            dataValid.dataActivitySorted{i}.switchingIndex =...
+            data.dataActivitySorted{i}.switchingIndex(...
+            data.dataActivitySorted{i}.switchingIndex >= trainingLength)...
+            - trainingLength;
+        end
     end
 end
             
