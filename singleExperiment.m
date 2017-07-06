@@ -42,9 +42,11 @@ classdef singleExperiment
             else
                 dataFile = textscan(fileID,singleExperimentObj.dataFormat);
                 activLab = dataFile{end};
+                fIndex = cellfun(@isempty,activLab);
+                activLab(fIndex) = {'NAW'};
                 if (length(activLab) == length(dataFile{1}) - 1)
                     activLabNew = cell(length(activLab)+1,1);
-                    activLabNew{1} = '';
+                    activLabNew{1} = 'NAW';
                     activLabNew(2:end) = activLab;
                     activLab = activLabNew;
                 end
