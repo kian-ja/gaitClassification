@@ -220,7 +220,7 @@ end
 
 function [X,frequency] = fourier(x,samplingTime)
     if iseven(length(x)) == 0
-        frequency = -1/2/samplingTime : 1/samplingTime/length(x) : 1/2/samplingTime;
+        frequency = -1/2/samplingTime : 1/samplingTime/length(x) : 1/2/samplingTime-1/samplingTime/length(x);;
     else
         frequency = -1/2/samplingTime : 1/samplingTime/length(x) : 1/2/samplingTime-1/samplingTime/length(x);
     end

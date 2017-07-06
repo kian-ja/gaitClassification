@@ -1,8 +1,9 @@
 classdef activityClassification
 	properties
         classifierModel = [];
-        classificationRate = 3;%in (s)
-        samplingRate = 0.02;
+        classificationTrainingRate = 3;%in (s)
+        classificationPredictionRate = 1;%in (s)
+        samplingTime = 0.02;
         plotMode = 1;
         trainingNumSegment = 1500;
         validationNumSegment = 200;
@@ -11,6 +12,7 @@ classdef activityClassification
         falsePositiveIdentification = [];
         truePositiveValidation = [];
         falsePositiveValidation = [];
+        numFeatures = 0;
 	end
 	methods
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -22,6 +24,52 @@ classdef activityClassification
                 classTrainObj = train(classTrainObj,data);
             end
         end
+%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%new function%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+		function prediction = simulateRealTime(classTrainObj,signal)
+            if (class(signal)=='singleExperiment')
+                
+                model = classTrainObj.classifierModel;
+                nSample = size(signal.dataMatrix,1);
+                samplePerSegment = (classTrainObj.classificationPredictionRate/classTrainObj.samplingTime);
+                nSeg = floor(nSample / samplePerSegment);
+                predictionSegment = cell(nSeg,1);
+                classTrainWindow = classTrainObj.classificationTrainingRate/0.02;
+                featureAllSegments = zeros(nSeg,classTrainObj.numFeatures);
+                h = waitbar(0,'please wait...');
+                for i = 2 : nSeg
+                    waitbar(i/nSeg);
+                    dataThisSegment = signal;
+                    if ((i-1)*samplePerSegment+2-classTrainWindow)<1
+                        dataThisSegment.dataMatrix = dataThisSegment.dataMatrix(1:(i-1)*samplePerSegment + 1,:);
+                        dataThisSegment.activityLabel = dataThisSegment.activityLabel(1:(i-1)*samplePerSegment + 1,:);
+                        featureThisSegment = classificationFeature(dataThisSegment);
+                        featureAllSegments(i,:) = featureThisSegment.feature;
+                    else
+                        dataThisSegment.dataMatrix = dataThisSegment.dataMatrix((i-1)*samplePerSegment+2-classTrainWindow:(i-1)*samplePerSegment + 1,:);
+                        dataThisSegment.activityLabel = dataThisSegment.activityLabel((i-1)*samplePerSegment+2-classTrainWindow:(i-1)*samplePerSegment + 1,:);
+                        featureThisSegment = classificationFeature(dataThisSegment);
+                        featureAllSegments(i,:) = featureThisSegment.feature;
+                    end
+                end
+                close(h);
+                predictionSegment = predict(model,featureAllSegments);
+                predictionClassTimeHistory = repmat(predictionSegment,1,samplePerSegment)';
+                predictionClassTimeHistory = predictionClassTimeHistory(:);
+                trueClassTimeHistory = signal.activityLabel;
+                trueClassTimeHistory = trueClassTimeHistory(1:nSeg * samplePerSegment);
+                prediction = predictionSegment;
+                if nargout < 1
+                    time = 0.02: 0.02:1;
+                    time = time';
+                    plotRealTime(signal,prediction)
+                else
+                end
+            else
+                warning('simulateRealTime: input signal not supported...')
+            end
+        end        
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -48,6 +96,7 @@ classdef activityClassification
                     trainingSetLabel{end+1} = labelTemp;
                 end
             end
+            classTrainObj.numFeatures = length(featureTemp.feature);
             trainingSetLabel = trainingSetLabel';
             
             if classTrainObj.plotMode
@@ -175,9 +224,9 @@ end
 
 function dataSegment = randomSelect(classTrainObj,data,numClassSelect)
     if (class(data) == 'populationExperiment')
-        segLength = classTrainObj.classificationRate;
-        samplingRate = classTrainObj.samplingRate;
-        segLength = floor(segLength/samplingRate);
+        segLength = classTrainObj.classificationTrainingRate;
+        samplingTime = classTrainObj.samplingTime;
+        segLength = floor(segLength/samplingTime);
         nSamp = size(data.dataActivitySorted{numClassSelect}.dataMatrix,1);
         if ((nSamp-segLength-1)>1)
             containsDiscontin = 1;
