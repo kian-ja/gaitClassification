@@ -27,7 +27,10 @@ classdef activityClassification
 %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%new function%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%
-		function prediction = simulateRealTime(classTrainObj,signal)
+		function predictionClassTimeHistory = simulateRealTime(classTrainObj,signal,emulationRate)
+            if nargin==2
+                emulationRate = 1;
+            end
             if (class(signal)=='singleExperiment')
                 
                 model = classTrainObj.classifierModel;
@@ -60,29 +63,44 @@ classdef activityClassification
                 predictionClassTimeHistory = predictionClassTimeHistory(:);
                 trueClassTimeHistory = signal.activityLabel;
                 trueClassTimeHistory = trueClassTimeHistory(1:nSeg * samplePerSegment);
-                prediction = predictionSegment;
                 if nargout < 1
-                    time = ts: ts:10;
+                    figure
+                    time = -10: ts:0-ts;
                     time = time';
                     numChannel = size(signal.dataMatrix,2) - 1;
-                    dataThisFrame = zeros(length(time),numChannel+1);
-                    for i = 2 : nSeg
+                    dataThisFrame = nan(length(time),numChannel+1);
+                    classThisFrame = nan(length(time),2);
+                    classPredict = convertLabel2Num(predictionClassTimeHistory);
+                    classTrue = convertLabel2Num(trueClassTimeHistory);
+                    classPredictTrue = [classTrue,classPredict];
+                    for i = 1 : nSeg
                         time = time + classTrainObj.classificationPredictionRate;
                         dataSegment = signal.dataMatrix((i-1)*samplePerSegment + 1:i*samplePerSegment,:);
+                        classSegment = classPredictTrue((i-1)*samplePerSegment + 1:i*samplePerSegment,:);
                         dataThisFrame = shiftFrame(dataThisFrame,dataSegment);
-                        subplot(3,1,1)
+                        classThisFrame = shiftFrame(classThisFrame,classSegment);
+                        subplot(4,1,1);
                         plot(time,dataThisFrame(:,2))
                         ylim([-2,2])
                         title('Acceleration X')
-                        subplot(3,1,2)
+                        subplot(4,1,2);
                         plot(time,dataThisFrame(:,3))
                         title('Acceleration Y')
                         ylim([-2,2])
-                        subplot(3,1,3)
+                        subplot(4,1,3);
                         plot(time,dataThisFrame(:,4))
                         title('Acceleration Z')
                         ylim([-2,2])
-                        pause(1);
+                        subplot(4,1,4);
+                        plot(time,classThisFrame(:,1),'b','lineWidth',3)
+                        hold on
+                        plot(time,classThisFrame(:,2),'--r','lineWidth',1)
+                        legend('True Class','Predicted Class','location','north')
+                        hold off
+                        ylim([0,4])
+                        set(gca,'YTick',[1:3])
+                        set(gca,'YTickLabel',{'Neither';' Walk';'Run'})
+                        pause(1/emulationRate);
                     end
                 else
                 end
@@ -276,5 +294,24 @@ function dataFrame = shiftFrame(dataFrame,dataSegment)
     dataFrame = circshift(dataFrame,-nSampleShift);
     dataFrame (end-nSampleShift+1:end,:) = dataSegment;
 end
-
-        
+function labelMajorityEvent = majorityEventSelect(label)
+    labelMajorityEventSegmented = zeros(size(label,1),1);
+    for i = 1 : size(label,1)
+        labelThisSegment = label(i,:);
+        uniqueLabelsThisSegment = unique(labelThisSegment);
+        uniqueLabelsThisSegmentOccurence = zeros(length(uniqueLabelsThisSegment),1);
+        for j = 1 : length(uniqueLabelsThisSegment)
+            uniqueLabelsThisSegmentOccurence(j) = length(find(labelThisSegment == uniqueLabelsThisSegment(j)));
+        end
+        [~,labelMajorityEventSegmented(i)] = max(uniqueLabelsThisSegmentOccurence);
+    end
+end
+function classNum = convertLabel2Num(classLabel)
+    classNum = zeros(size(classLabel));
+    fIndex = strcmp(classLabel,'NAW');
+    classNum(fIndex) = 1;
+    fIndex = strcmp(classLabel,'Walk');
+    classNum(fIndex) = 2;
+    fIndex = strcmp(classLabel,'Run');
+    classNum(fIndex) = 3;
+end
