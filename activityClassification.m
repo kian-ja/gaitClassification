@@ -4,7 +4,7 @@ classdef activityClassification
         classificationTrainingRate = 3;%in (s)
         classificationPredictionRate = 1;%in (s)
         samplingTime = 0.02;
-        plotMode = 1;
+        plotMode = 0;
         trainingNumSegment = 1500;
         validationNumSegment = 200;
         trainingRatio = 0.8;
@@ -12,6 +12,8 @@ classdef activityClassification
         falsePositiveIdentification = [];
         truePositiveValidation = [];
         falsePositiveValidation = [];
+        confusionIdentification = [];
+        confusionValidation = [];
         numFeatures = 0;
 	end
 	methods
@@ -139,18 +141,21 @@ classdef activityClassification
             
             if classTrainObj.plotMode
                 if size(trainingSetFeature,2) == 2
-                                        class1 = trainingSetFeature([1:3:4500],:);
-                    class2 = trainingSetFeature([2:3:4500],:);
-                    class3 = trainingSetFeature([3:3:4500],:);
+                    %class1 = trainingSetFeature([1:3:4500],:);
+                    %class2 = trainingSetFeature([2:3:4500],:);
+                    %class3 = trainingSetFeature([3:3:4500],:);
 
-                    plot(class1(:,1),class1(:,2),'o','markerFaceColor','k','markerEdgeColor','k')
-                    hold on
-                    plot(class2(:,1),class2(:,2),'o','markerFaceColor','r','markerEdgeColor','r')
-                    plot(class3(:,1),class3(:,2),'o','markerFaceColor','b','markerEdgeColor','b')
-                    grid on
+                    %plot(class1(:,1),class1(:,2),'o','markerFaceColor','k','markerEdgeColor','k')
+                    %hold on
+                    %plot(class2(:,1),class2(:,2),'o','markerFaceColor','r','markerEdgeColor','r')
+                    %plot(class3(:,1),class3(:,2),'o','markerFaceColor','b','markerEdgeColor','b')
+                    %grid on
+                    %xlabel('Feature 1')
+                    %ylabel('Feature 2')
+                    %legend(trainingSetLabel{1},trainingSetLabel{2},trainingSetLabel{3})
+                    gscatter(trainingSetFeature(:,1),trainingSetFeature(:,2),trainingSetLabel);
                     xlabel('Feature 1')
                     ylabel('Feature 2')
-                    legend(trainingSetLabel{1},trainingSetLabel{2},trainingSetLabel{3})
                 end
                 if size(trainingSetFeature,2) == 3
                     class1 = trainingSetFeature([1:3:4500],:);
@@ -177,8 +182,10 @@ classdef activityClassification
             
             tPosID = computeTruePositive(trainingSetLabel,predictTrainingSetLabel);
             fPosID = computeFalsePositive(trainingSetLabel,predictTrainingSetLabel);
+            confusionID = computeConfusionMatrix(trainingSetLabel,predictTrainingSetLabel);
             classTrainObj.truePositiveIdentification = tPosID;
             classTrainObj.falsePositiveIdentification = fPosID;
+            classTrainObj.confusionIdentification = confusionID;
             %Validation
             validationSetFeature = [];
             validationSetLabel = [];
@@ -192,13 +199,14 @@ classdef activityClassification
                     validationSetLabel{end+1} = labelTemp;
                 end
             end
-            
+            validationSetLabel = validationSetLabel';
             predictValidationSetLabel = predict(model,validationSetFeature);
             tPosValid = computeTruePositive(validationSetLabel,predictValidationSetLabel);
             fPosValid = computeFalsePositive(validationSetLabel,predictValidationSetLabel);
-            
+            confusionValid = computeConfusionMatrix(validationSetLabel,predictValidationSetLabel);
             classTrainObj.truePositiveValidation = tPosValid;
             classTrainObj.falsePositiveValidation = fPosValid;
+            classTrainObj.confusionValidation = confusionValid;
         end
     end
 end
@@ -314,4 +322,21 @@ function classNum = convertLabel2Num(classLabel)
     classNum(fIndex) = 2;
     fIndex = strcmp(classLabel,'Run');
     classNum(fIndex) = 3;
+end
+
+function confusion = computeConfusionMatrix(trueValues,predictedValues)
+    classes = unique(trueValues);
+    numClasses = length(classes);
+    confusion = zeros(numClasses,numClasses);
+    for i = 1 : numClasses
+        for j = 1 : numClasses
+            confusion(i,j) = computeProbability(trueValues,predictedValues,classes(i),classes(j));
+        end 
+    end
+end
+
+function p = computeProbability(trueValues,predictedValues,trueClass,predictClass)
+    indexTrue = strcmp(trueValues, trueClass);
+    indexPredict = strcmp(predictedValues, predictClass);
+    p = sum((indexTrue == indexPredict)&(indexTrue ==1))/sum(indexTrue);
 end

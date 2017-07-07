@@ -21,7 +21,7 @@ classdef classificationFeature
         flagFeatureAccelZHighFreqPower = 0;
         flagFeatureAccelZDominantFreq = 0;
         
-        lowFreqCutOff = 1.5;
+        lowFreqCutOff = 0.5;
         highFreqCutOff = 7;
         feature = [];
         samplingTime = [];
