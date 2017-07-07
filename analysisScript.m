@@ -6,3 +6,6 @@ disp(['True Positive Valid: ',num2str(classifier.truePositiveValidation)])
 disp(['False positive for this classifier: '])
 disp(['False Positive ID: ',num2str(classifier.falsePositiveIdentification)])
 disp(['False Positive Valid: ',num2str(classifier.falsePositiveValidation)])
+
+testRealTime = singleExperiment('data/hw_file_3.csv');
+simulateRealTime(classifier,testRealTime)
